@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid request ID" });
     }
     
-    if (!status || !["accepted", "rejected"].includes(status)) {
+    if (!status || !["accepted", "rejected"].includes(status as string)) {
       return res.status(400).json({ message: "Invalid status. Must be 'accepted' or 'rejected'" });
     }
     

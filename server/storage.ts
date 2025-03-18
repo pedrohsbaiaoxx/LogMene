@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, freightRequests, type FreightRequest, type InsertFreightRequest, quotes, type Quote, type InsertQuote, type FreightRequestWithQuote } from "@shared/schema";
+import { users, type User, type InsertUser, freightRequests, type FreightRequest, type InsertFreightRequest, quotes, type Quote, type InsertQuote, type FreightRequestWithQuote, requestStatus } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -16,7 +16,7 @@ export interface IStorage {
   getFreightRequestsByUserId(userId: number): Promise<FreightRequestWithQuote[]>;
   getPendingFreightRequests(): Promise<FreightRequestWithQuote[]>;
   getActiveFreightRequests(): Promise<FreightRequestWithQuote[]>;
-  updateFreightRequestStatus(id: number, status: string): Promise<FreightRequest | undefined>;
+  updateFreightRequestStatus(id: number, status: typeof requestStatus[number]): Promise<FreightRequest | undefined>;
   
   // Quote operations
   createQuote(quote: InsertQuote): Promise<Quote>;
@@ -100,10 +100,18 @@ export class MemStorage implements IStorage {
   async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {
     const id = this.requestCounter++;
     const createdAt = new Date();
+    
+    // Garantir que campos opcionais não sejam undefined
+    const notes = insertRequest.notes === undefined ? null : insertRequest.notes;
+    const requireInsurance = insertRequest.requireInsurance === undefined ? false : insertRequest.requireInsurance;
+    
     const request: FreightRequest = { 
-      ...insertRequest, 
+      ...insertRequest,
+      notes,
+      requireInsurance, 
       id, 
-      createdAt 
+      createdAt,
+      status: "pending" as const
     };
     this.freightRequests.set(id, request);
     return request;
@@ -182,7 +190,7 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async updateFreightRequestStatus(id: number, status: string): Promise<FreightRequest | undefined> {
+  async updateFreightRequestStatus(id: number, status: typeof requestStatus[number]): Promise<FreightRequest | undefined> {
     const request = this.freightRequests.get(id);
     if (!request) return undefined;
 
@@ -199,8 +207,13 @@ export class MemStorage implements IStorage {
   async createQuote(insertQuote: InsertQuote): Promise<Quote> {
     const id = this.quoteCounter++;
     const createdAt = new Date();
+    
+    // Garantir que notes não é undefined
+    const notes = insertQuote.notes === undefined ? null : insertQuote.notes;
+    
     const quote: Quote = { 
       ...insertQuote, 
+      notes,
       id, 
       createdAt 
     };
@@ -211,7 +224,7 @@ export class MemStorage implements IStorage {
     if (request) {
       const updatedRequest = {
         ...request,
-        status: "quoted"
+        status: "quoted" as const
       };
       this.freightRequests.set(request.id, updatedRequest);
     }
