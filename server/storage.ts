@@ -1,4 +1,11 @@
-import { users, type User, type InsertUser, freightRequests, type FreightRequest, type InsertFreightRequest, quotes, type Quote, type InsertQuote, type FreightRequestWithQuote, requestStatus } from "@shared/schema";
+import { 
+  users, type User, type InsertUser, 
+  freightRequests, type FreightRequest, type InsertFreightRequest, 
+  quotes, type Quote, type InsertQuote, 
+  deliveryProofs, type DeliveryProof, type InsertDeliveryProof,
+  notifications, type Notification, type InsertNotification,
+  type FreightRequestWithQuote, requestStatus, notificationTypes 
+} from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -22,6 +29,16 @@ export interface IStorage {
   createQuote(quote: InsertQuote): Promise<Quote>;
   getQuoteByRequestId(requestId: number): Promise<Quote | undefined>;
   
+  // Delivery proof operations
+  createDeliveryProof(proof: InsertDeliveryProof): Promise<DeliveryProof>;
+  getDeliveryProofByRequestId(requestId: number): Promise<DeliveryProof | undefined>;
+  
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotificationsByUserId(userId: number): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<Notification | undefined>;
+  getUnreadNotificationsCount(userId: number): Promise<number>;
+  
   // Session store
   sessionStore: ReturnType<typeof createMemoryStore>;
 }
@@ -30,18 +47,26 @@ export class MemStorage implements IStorage {
   users: Map<number, User>; // Mudado de private para public para permitir acesso no routes.ts
   private freightRequests: Map<number, FreightRequest>;
   private quotes: Map<number, Quote>;
+  private deliveryProofs: Map<number, DeliveryProof>;
+  private notifications: Map<number, Notification>;
   private userCounter: number;
   private requestCounter: number;
   private quoteCounter: number;
+  private proofCounter: number;
+  private notificationCounter: number;
   sessionStore: ReturnType<typeof createMemoryStore>;
 
   constructor() {
     this.users = new Map();
     this.freightRequests = new Map();
     this.quotes = new Map();
+    this.deliveryProofs = new Map();
+    this.notifications = new Map();
     this.userCounter = 1;
     this.requestCounter = 1;
     this.quoteCounter = 1;
+    this.proofCounter = 1;
+    this.notificationCounter = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
@@ -271,6 +296,92 @@ export class MemStorage implements IStorage {
     return Array.from(this.quotes.values()).find(
       (quote) => quote.requestId === requestId
     );
+  }
+
+  // Delivery proof operations
+  async createDeliveryProof(insertProof: InsertDeliveryProof): Promise<DeliveryProof> {
+    const id = this.proofCounter++;
+    const createdAt = new Date();
+    
+    // Garantir que notes não é undefined
+    const notes = insertProof.notes === undefined ? null : insertProof.notes;
+    
+    const proof: DeliveryProof = { 
+      ...insertProof, 
+      notes,
+      id, 
+      createdAt 
+    };
+    this.deliveryProofs.set(id, proof);
+    
+    // Atualizar o status da solicitação para "completed"
+    const request = this.freightRequests.get(insertProof.requestId);
+    if (request) {
+      const updatedRequest = {
+        ...request,
+        status: "completed" as const
+      };
+      this.freightRequests.set(request.id, updatedRequest);
+      
+      // Criar notificação para o cliente
+      this.createNotification({
+        userId: request.userId,
+        requestId: request.id,
+        type: "proof_uploaded",
+        message: "O comprovante de entrega da sua carga foi adicionado.",
+        read: false
+      });
+    }
+    
+    return proof;
+  }
+
+  async getDeliveryProofByRequestId(requestId: number): Promise<DeliveryProof | undefined> {
+    return Array.from(this.deliveryProofs.values()).find(
+      (proof) => proof.requestId === requestId
+    );
+  }
+
+  // Notification operations
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const id = this.notificationCounter++;
+    const createdAt = new Date();
+    
+    const notification: Notification = { 
+      ...insertNotification, 
+      id, 
+      createdAt 
+    };
+    this.notifications.set(id, notification);
+    
+    return notification;
+  }
+
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    const notifications = Array.from(this.notifications.values())
+      .filter(notification => notification.userId === userId);
+    
+    return notifications.sort((a, b) => 
+      (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
+    );
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const notification = this.notifications.get(id);
+    if (!notification) return undefined;
+
+    const updatedNotification = {
+      ...notification,
+      read: true
+    };
+    
+    this.notifications.set(id, updatedNotification);
+    return updatedNotification;
+  }
+
+  async getUnreadNotificationsCount(userId: number): Promise<number> {
+    const notifications = await this.getNotificationsByUserId(userId);
+    return notifications.filter(notification => !notification.read).length;
   }
 }
 
