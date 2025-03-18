@@ -1,4 +1,4 @@
-import { Bell, Menu, Package, Settings, LogOut, User, Truck } from "lucide-react";
+import { Menu, Package, LogOut, User, Truck, Settings } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -88,18 +87,10 @@ export function Header({ title = "LogMene" }: HeaderProps) {
           </Sheet>
 
           <h1 className="text-xl font-bold">
-            {isCompany ? (
-              <span className="flex items-center">
-                <Truck className="h-5 w-5 mr-2 hidden sm:inline-block" />
-                <span>{title}</span>
-                <span className="hidden sm:inline"> - Transportadora</span>
-              </span>
-            ) : (
-              <span className="flex items-center">
-                <Truck className="h-5 w-5 mr-2 hidden sm:inline-block" />
-                <span>{title}</span>
-              </span>
-            )}
+            <span className="flex items-center">
+              <Truck className="h-5 w-5 mr-2 hidden sm:inline-block" />
+              <span>{title}</span>
+            </span>
           </h1>
         </div>
 
@@ -120,37 +111,20 @@ export function Header({ title = "LogMene" }: HeaderProps) {
         <div className="flex items-center space-x-2">
           <ThemeSwitcher />
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full text-white hover:bg-primary-light transition-colors"
-          >
-            <Bell className="h-5 w-5" />
-          </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="hidden md:flex items-center space-x-1 rounded-full text-white hover:bg-primary-light transition-colors"
+                className="flex items-center space-x-1 rounded-full text-white hover:bg-primary-light transition-colors"
               >
-                <User className="h-5 w-5 md:mr-2" />
-                <span className="hidden md:inline max-w-[100px] truncate">{user?.fullName}</span>
+                <User className="h-5 w-5" />
+                <span className="hidden md:inline">{isCompany ? "Empresa" : "Cliente"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                Perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center">
-                <Settings className="h-4 w-4 mr-2" />
-                Configurações
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => logoutMutation.mutate()}
-                className="text-destructive focus:text-destructive flex items-center"
+                className="flex items-center"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
