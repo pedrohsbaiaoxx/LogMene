@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ export function Header({ title = "FreteApp" }: HeaderProps) {
           {isCompany ? `${title} - Transportadora` : title}
         </h1>
         <div className="flex items-center space-x-2">
+          <ThemeSwitcher />
+          
           <Button
             variant="ghost"
             size="icon"
