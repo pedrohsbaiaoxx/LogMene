@@ -11,6 +11,7 @@ import ClientHomePage from "@/pages/client/home-page";
 import CompanyHomePage from "@/pages/company/home-page";
 import NewRequestPage from "@/pages/client/new-request";
 import RequestDetailsPage from "@/pages/client/request-details";
+import RequestsPage from "@/pages/client/requests-page";
 import CompanyRequestDetailsPage from "@/pages/company/request-details";
 import CreateQuotePage from "@/pages/company/create-quote";
 import ClientsPage from "@/pages/company/clients";
@@ -38,7 +39,7 @@ function Router() {
       />
       <ProtectedRoute 
         path="/requests" 
-        component={ClientHomePage} 
+        component={RequestsPage} 
         allowedRoles={["client"]} 
       />
       <ProtectedRoute 
