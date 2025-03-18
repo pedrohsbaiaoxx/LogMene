@@ -112,3 +112,17 @@ export async function sendDeliveryProofNotification(userId: number, requestId: n
     message,
   });
 }
+
+/**
+ * Enviar notificação para empresa quando uma nova solicitação de frete é criada
+ */
+export async function sendNewFreightRequestNotification(companyUserId: number, requestId: number, clientName: string) {
+  const message = `Nova solicitação de frete recebida do cliente ${clientName}. Acesse o sistema para enviar uma cotação.`;
+
+  return sendNotification({
+    userId: companyUserId,
+    requestId,
+    type: 'status_update',
+    message,
+  });
+}

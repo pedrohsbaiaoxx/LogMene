@@ -16,6 +16,9 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  getAllClients(): Promise<User[]>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Freight request operations
   createFreightRequest(request: InsertFreightRequest): Promise<FreightRequest>;
@@ -149,6 +152,10 @@ export class MemStorage implements IStorage {
     }
     
     return true;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
   
   async getAllClients(): Promise<User[]> {

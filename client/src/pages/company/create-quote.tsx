@@ -342,7 +342,10 @@ export default function CreateQuotePage() {
                             min="0" 
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            onChange={(e) => {
+                              const value = e.target.value ? parseFloat(e.target.value) : 0;
+                              field.onChange(value);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -360,7 +363,10 @@ export default function CreateQuotePage() {
                             type="number" 
                             min="1" 
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            onChange={(e) => {
+                              const value = e.target.value ? parseInt(e.target.value) : 1;
+                              field.onChange(value);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />

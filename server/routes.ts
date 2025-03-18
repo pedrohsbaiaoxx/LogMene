@@ -15,7 +15,8 @@ import { sendEmail } from "./services/email-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
-  sendDeliveryProofNotification 
+  sendDeliveryProofNotification,
+  sendNewFreightRequestNotification
 } from "./services/notification-service";
 import { getDistanceBetweenAddresses } from "./services/distance-service";
 
@@ -83,6 +84,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const freightRequest = await storage.createFreightRequest(requestData);
+      
+      // Enviar notificação para empresas sobre nova solicitação
+      // Buscando usuários que são empresas para notificá-los
+      const companyUsers = await storage.getAllUsers().filter(user => user.role === "company");
+      if (companyUsers.length > 0) {
+        // Usar o nome completo do cliente para a notificação
+        const clientName = req.user!.fullName || req.user!.username;
+        
+        // Notificar cada empresa
+        for (const companyUser of companyUsers) {
+          sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
+        }
+      }
+      
       res.status(201).json(freightRequest);
     } catch (error) {
       handleZodError(error, res);
