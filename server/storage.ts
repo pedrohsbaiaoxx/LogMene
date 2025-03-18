@@ -27,7 +27,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+  users: Map<number, User>; // Mudado de private para public para permitir acesso no routes.ts
   private freightRequests: Map<number, FreightRequest>;
   private quotes: Map<number, Quote>;
   private userCounter: number;

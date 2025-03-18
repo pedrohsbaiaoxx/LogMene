@@ -11,6 +11,8 @@ import CompanyHomePage from "@/pages/company/home-page";
 import NewRequestPage from "@/pages/client/new-request";
 import RequestDetailsPage from "@/pages/client/request-details";
 import CreateQuotePage from "@/pages/company/create-quote";
+import ClientsPage from "@/pages/company/clients";
+import CreateClientPage from "@/pages/company/create-client";
 import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
@@ -42,6 +44,16 @@ function Router() {
       <ProtectedRoute 
         path="/company/quotes/:requestId" 
         component={CreateQuotePage} 
+        allowedRoles={["company"]} 
+      />
+      <ProtectedRoute 
+        path="/company/clients" 
+        component={ClientsPage} 
+        allowedRoles={["company"]} 
+      />
+      <ProtectedRoute 
+        path="/company/create-client" 
+        component={CreateClientPage} 
         allowedRoles={["company"]} 
       />
       

@@ -206,6 +206,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       handleZodError(error, res);
     }
   });
+  
+  // Get all clients (company only)
+  app.get("/api/company/clients", ensureCompany, async (req, res) => {
+    try {
+      const allUsers = Array.from(storage.users.values());
+      // Remove passwords before sending
+      const usersWithoutPasswords = allUsers.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching clients" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
