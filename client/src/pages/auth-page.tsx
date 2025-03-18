@@ -25,7 +25,7 @@ type UserType = "client" | "company";
 
 export default function AuthPage() {
   const [userType, setUserType] = useState<UserType>("client");
-  const { user, loginMutation } = useAuth();
+  const { user, loginMutation, logoutMutation } = useAuth();
   const [, navigate] = useLocation();
 
   // Redirect if already logged in
@@ -46,7 +46,19 @@ export default function AuthPage() {
 
   // Login form submit handler
   function onLoginSubmit(values: z.infer<typeof loginSchema>) {
-    loginMutation.mutate(values);
+    loginMutation.mutate(values, {
+      onSuccess: (user: any) => {
+        // Verificar se o tipo de usuário corresponde ao selecionado
+        if (user.role !== userType) {
+          loginForm.setError("username", {
+            type: "manual",
+            message: `Esta conta não é do tipo ${userType === "client" ? "cliente" : "transportadora"}`
+          });
+          // Fazer logout, pois o usuário logou com o tipo errado
+          logoutMutation.mutate();
+        }
+      }
+    });
   }
 
   return (
