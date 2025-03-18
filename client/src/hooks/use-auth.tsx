@@ -39,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.fullName}!`,
+        title: "Login realizado com sucesso",
+        description: `Bem-vindo(a) de volta, ${user.fullName}!`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
-        description: error.message,
+        title: "Falha no login",
+        description: "Nome de usuário ou senha incorretos",
         variant: "destructive",
       });
     },
@@ -60,14 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
-        title: "Registration successful",
-        description: `Welcome, ${user.fullName}!`,
+        title: "Cadastro realizado com sucesso",
+        description: `Bem-vindo(a), ${user.fullName}!`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
-        description: error.message,
+        title: "Falha no cadastro",
+        description: "Não foi possível completar o cadastro. Por favor, tente novamente.",
         variant: "destructive",
       });
     },
@@ -80,14 +80,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
+        title: "Sessão encerrada",
+        description: "Você saiu do sistema com sucesso.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Logout failed",
-        description: error.message,
+        title: "Falha ao sair",
+        description: "Não foi possível encerrar a sessão. Tente novamente.",
         variant: "destructive",
       });
     },

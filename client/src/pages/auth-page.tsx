@@ -46,6 +46,9 @@ export default function AuthPage() {
 
   // Login form submit handler
   function onLoginSubmit(values: z.infer<typeof loginSchema>) {
+    // Limpando erros anteriores
+    loginForm.clearErrors();
+    
     loginMutation.mutate(values, {
       onSuccess: (user: any) => {
         // Verificar se o tipo de usuário corresponde ao selecionado
@@ -57,6 +60,17 @@ export default function AuthPage() {
           // Fazer logout, pois o usuário logou com o tipo errado
           logoutMutation.mutate();
         }
+      },
+      onError: (error) => {
+        // Mostrando erros específicos no formulário
+        loginForm.setError("username", {
+          type: "manual",
+          message: "Usuário ou senha inválidos"
+        });
+        loginForm.setError("password", {
+          type: "manual",
+          message: "Usuário ou senha inválidos"
+        });
       }
     });
   }
