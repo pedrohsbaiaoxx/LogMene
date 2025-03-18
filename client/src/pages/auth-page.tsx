@@ -83,10 +83,10 @@ export default function AuthPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-primary flex items-center justify-center">
               <TruckIcon className="mr-2 h-8 w-8" />
-              FreteApp
+              LogMene
             </h1>
             <p className="text-neutral-600 mt-2">
-              Serviço de Transporte Eficiente
+              Sistema de Logística Inteligente
             </p>
           </div>
 
@@ -158,19 +158,7 @@ export default function AuthPage() {
           </Form>
           
           <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Usuários padrão para teste:</p>
-            <div className="mt-2 grid grid-cols-2 gap-4 text-xs">
-              <div className="border rounded p-2">
-                <p><strong>Cliente:</strong></p>
-                <p>Usuário: cliente</p>
-                <p>Senha: 123456</p>
-              </div>
-              <div className="border rounded p-2">
-                <p><strong>Transportadora:</strong></p>
-                <p>Usuário: empresa</p>
-                <p>Senha: 123456</p>
-              </div>
-            </div>
+            <p>Não tem uma conta? Entre em contato com o administrador.</p>
           </div>
         </div>
       </div>
@@ -183,8 +171,8 @@ export default function AuthPage() {
               Gerencie suas entregas de forma simples e eficiente
             </h2>
             <p className="text-lg mb-6">
-              Conectamos clientes e transportadoras para proporcionar a melhor
-              experiência em fretes e transportes.
+              O LogMene conecta clientes e transportadoras para proporcionar a melhor
+              experiência em logística e transporte de cargas.
             </p>
             <ul className="space-y-2">
               <li className="flex items-center">

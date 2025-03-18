@@ -24,7 +24,7 @@ type HeaderProps = {
   title?: string;
 };
 
-export function Header({ title = "FreteApp" }: HeaderProps) {
+export function Header({ title = "LogMene" }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
   const [, navigate] = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
