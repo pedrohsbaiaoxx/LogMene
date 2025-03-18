@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertFreightRequestSchema, insertQuoteSchema } from "@shared/schema";
+import { insertFreightRequestSchema, insertQuoteSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -176,6 +176,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const updatedRequest = await storage.updateFreightRequestStatus(requestId, "completed");
     res.json(updatedRequest);
+  });
+  
+  // Create a client account (company only)
+  app.post("/api/company/clients", ensureCompany, async (req, res, next) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Force the role to be client
+      const userData = insertUserSchema.parse({
+        ...req.body,
+        role: "client" // Garantir que a role seja sempre "client"
+      });
+      
+      // Hash the password using the auth helper
+      const { hashPassword } = require("./auth");
+      const user = await storage.createUser({
+        ...userData,
+        password: await hashPassword(userData.password),
+      });
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      handleZodError(error, res);
+    }
   });
 
   const httpServer = createServer(app);

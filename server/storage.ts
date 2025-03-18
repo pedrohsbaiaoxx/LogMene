@@ -39,12 +39,43 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.freightRequests = new Map();
     this.quotes = new Map();
-    this.userCounter = 1;
+    this.userCounter = 3; // Começando em 3 para criar os usuários padrão 1 e 2
     this.requestCounter = 1;
     this.quoteCounter = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
+    
+    // Adicionar usuários padrão
+    this.addDefaultUsers();
+  }
+  
+  // Adiciona os usuários padrão para cliente e transportadora
+  private addDefaultUsers() {
+    // Usuário cliente
+    const clientUser: User = {
+      id: 1,
+      username: "cliente",
+      password: "$2b$10$vK5E2i6sjLc4PFX1Kfs3OOBexHOjnP/V8QDU2zg0o0SpRE/ygtEfK", // senha: 123456
+      fullName: "Cliente Padrão",
+      email: "cliente@exemplo.com",
+      phone: "(11) 99999-8888",
+      role: "client"
+    };
+    
+    // Usuário transportadora
+    const companyUser: User = {
+      id: 2,
+      username: "empresa",
+      password: "$2b$10$vK5E2i6sjLc4PFX1Kfs3OOBexHOjnP/V8QDU2zg0o0SpRE/ygtEfK", // senha: 123456
+      fullName: "Transportadora Ltda",
+      email: "transportadora@exemplo.com",
+      phone: "(11) 98888-7777",
+      role: "company"
+    };
+    
+    this.users.set(clientUser.id, clientUser);
+    this.users.set(companyUser.id, companyUser);
   }
 
   // User operations
