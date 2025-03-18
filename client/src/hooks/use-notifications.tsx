@@ -53,22 +53,18 @@ export function useNotifications() {
   // Marcar todas as notificações como lidas
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      // Buscar notificações não lidas
-      const notificationsToMark = notifications.filter(n => !n.read);
+      const response = await fetch('/api/notifications/mark-all-read', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
-      // Marcar cada uma como lida
-      await Promise.all(
-        notificationsToMark.map(notification => 
-          fetch(`/api/notifications/${notification.id}/read`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-        )
-      );
+      if (!response.ok) {
+        throw new Error('Erro ao marcar todas as notificações como lidas');
+      }
       
-      return true;
+      return await response.json();
     },
     onSuccess: () => {
       // Atualizar cache de notificações e contagem

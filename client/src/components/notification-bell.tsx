@@ -31,6 +31,15 @@ export function NotificationBell() {
   } = useNotifications();
   const [, navigate] = useLocation();
   
+  // Ao abrir o menu, marcar todas as notificações como lidas
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen && unreadCount > 0) {
+      // Marcar todas as notificações como lidas
+      markAllAsRead();
+    }
+  };
+  
   // Ordenar notificações: não lidas primeiro, depois por data
   const sortedNotifications = [...notifications].sort((a, b) => {
     if (a.read === b.read) {
@@ -73,7 +82,7 @@ export function NotificationBell() {
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-white hover:bg-primary-light">
           <BellRing className="h-5 w-5" />
