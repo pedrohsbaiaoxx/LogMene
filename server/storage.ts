@@ -96,6 +96,40 @@ export class MemStorage implements IStorage {
     this.users.set(id, user);
     return user;
   }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Verifica se o usuário existe
+    if (!this.users.has(id)) {
+      return false;
+    }
+    
+    // Remove o usuário
+    this.users.delete(id);
+    
+    // Remove também as solicitações de frete deste usuário
+    const requestsToRemove = Array.from(this.freightRequests.entries())
+      .filter(([_, request]) => request.userId === id);
+      
+    for (const [requestId, _] of requestsToRemove) {
+      // Remove cotações associadas a esta solicitação
+      const quotesToRemove = Array.from(this.quotes.entries())
+        .filter(([_, quote]) => quote.requestId === requestId);
+        
+      for (const [quoteId, _] of quotesToRemove) {
+        this.quotes.delete(quoteId);
+      }
+      
+      // Remove a solicitação
+      this.freightRequests.delete(requestId);
+    }
+    
+    return true;
+  }
+  
+  async getAllClients(): Promise<User[]> {
+    return Array.from(this.users.values())
+      .filter(user => user.role === 'client');
+  }
 
   // Freight request operations
   async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {

@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { User as UserType } from "@shared/schema";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   UsersIcon, 
   PlusIcon, 
   MailIcon, 
   PhoneIcon,
-  Loader2Icon
+  TrashIcon,
+  Loader2Icon,
+  AlertTriangleIcon
 } from "lucide-react";
 import {
   Card,
@@ -22,11 +25,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function ClientsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
+  const [clientToDelete, setClientToDelete] = useState<UserType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user?.role !== "company") {
@@ -38,6 +55,34 @@ export default function ClientsPage() {
   const { data: clients, isLoading, error } = useQuery<UserType[]>({
     queryKey: ["/api/company/clients"],
     queryFn: getQueryFn({ on401: "throw" }),
+  });
+  
+  // Mutation para excluir cliente
+  const deleteClientMutation = useMutation({
+    mutationFn: async (clientId: number) => {
+      const res = await apiRequest("DELETE", `/api/company/clients/${clientId}`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Cliente excluído com sucesso",
+        description: "O cliente e todos os seus pedidos foram removidos.",
+        variant: "default",
+      });
+      // Fechar o diálogo
+      setIsDeleteDialogOpen(false);
+      setClientToDelete(null);
+      // Invalidar o cache para recarregar a lista
+      queryClient.invalidateQueries({ queryKey: ["/api/company/clients"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsDeleteDialogOpen(false);
+    },
   });
 
   // Filtrar clientes baseado na busca
