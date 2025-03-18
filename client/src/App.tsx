@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import React, { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -70,11 +71,22 @@ function Router() {
 }
 
 function App() {
+  // Forçar o tema escuro diretamente na raiz do aplicativo
+  useEffect(() => {
+    // Adicionar classe dark ao HTML
+    document.documentElement.classList.add('dark');
+    // Definir o fundo escuro diretamente
+    document.body.style.backgroundColor = '#0f172a'; // bg-slate-900
+    document.documentElement.style.backgroundColor = '#0f172a'; // bg-slate-900
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <div className="bg-slate-900 min-h-screen text-slate-50">
+          <Router />
+          <Toaster />
+        </div>
       </AuthProvider>
     </QueryClientProvider>
   );
