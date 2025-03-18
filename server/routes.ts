@@ -11,6 +11,13 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { sendEmail } from "./services/email-service";
+import { 
+  sendStatusUpdateNotification, 
+  sendQuoteNotification, 
+  sendDeliveryProofNotification 
+} from "./services/notification-service";
+import { getDistanceBetweenAddresses } from "./services/distance-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -142,6 +149,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const quote = await storage.createQuote(quoteData);
+      
+      // Após criar a cotação, atualizamos o status da solicitação para "quoted"
+      const updatedRequest = await storage.updateFreightRequestStatus(quoteData.requestId, "quoted");
+      
+      // Enviamos notificação ao cliente
+      if (updatedRequest) {
+        sendQuoteNotification(updatedRequest.userId, quoteData.requestId, quoteData.value);
+      }
+      
       res.status(201).json(quote);
     } catch (error) {
       handleZodError(error, res);
@@ -178,6 +194,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     const updatedRequest = await storage.updateFreightRequestStatus(requestId, status);
+    
+    // Enviar notificação de atualização de status
+    if (updatedRequest) {
+      sendStatusUpdateNotification(updatedRequest.userId, requestId, status);
+    }
+    
     res.json(updatedRequest);
   });
 
@@ -201,6 +223,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     const updatedRequest = await storage.updateFreightRequestStatus(requestId, "completed");
+    
+    // Enviar notificação ao cliente sobre conclusão do frete
+    if (updatedRequest) {
+      sendStatusUpdateNotification(updatedRequest.userId, requestId, "completed");
+    }
+    
     res.json(updatedRequest);
   });
   
@@ -347,6 +375,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const proof = await storage.createDeliveryProof(proofData);
+      
+      // Notificar o cliente que um comprovante foi enviado
+      sendDeliveryProofNotification(request.userId, proofData.requestId);
+      
       res.status(201).json(proof);
     } catch (error) {
       handleZodError(error, res);
@@ -383,6 +415,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API para cálculo de distância entre endereços
+  app.post("/api/calculate-distance", ensureAuthenticated, async (req, res) => {
+    try {
+      const { fromAddress, toAddress } = req.body;
+      
+      if (!fromAddress || !toAddress) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Os endereços de origem e destino são obrigatórios" 
+        });
+      }
+      
+      const result = await getDistanceBetweenAddresses(fromAddress, toAddress);
+      res.json(result);
+    } catch (error) {
+      console.error("Erro ao calcular distância:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Erro interno ao calcular distância entre endereços" 
+      });
+    }
+  });
+  
   // Serviço de Email para notificações
   app.post("/api/send-email", ensureAuthenticated, async (req, res) => {
     try {
@@ -397,38 +452,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!to || !subject || (!text && !html)) {
         return res.status(400).json({ message: "Campos obrigatórios: to, subject e (text ou html)" });
       }
-
-      // Carrega módulo de email
-      const nodemailer = require("nodemailer");
       
-      // Cria transporte para envio de email
-      const transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email", // Para testes - não enviará emails reais
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.EMAIL_USER || "ethereal.user@ethereal.email",
-          pass: process.env.EMAIL_PASS || "etherealpassword"
-        }
-      });
-      
-      // Configura email
-      const mailOptions = {
-        from: process.env.EMAIL_FROM || "logmene@example.com",
+      // Usa o novo serviço de email
+      const result = await sendEmail({
         to,
+        from: 'noreply@logmene.com',
         subject,
-        text,
-        html
-      };
-      
-      // Enviar email (ou simular o envio em ambiente de teste)
-      const info = await transporter.sendMail(mailOptions);
-      
-      res.status(200).json({ 
-        message: "Email enviado com sucesso", 
-        messageId: info.messageId,
-        previewUrl: nodemailer.getTestMessageUrl(info)
+        text: text || '',
+        html: html || ''
       });
+      
+      if (result) {
+        res.status(200).json({ message: "Email enviado com sucesso" });
+      } else {
+        res.status(500).json({ message: "Falha ao enviar email" });
+      }
     } catch (error) {
       console.error("Erro ao enviar email:", error);
       res.status(500).json({ message: "Erro ao enviar email" });

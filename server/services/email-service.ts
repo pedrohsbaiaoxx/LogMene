@@ -27,10 +27,10 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
     await mailService.send({
       to: params.to,
-      from: params.from,
+      from: params.from, // deve ser um remetente verificado no SendGrid
       subject: params.subject,
-      text: params.text,
-      html: params.html,
+      text: params.text || '',
+      html: params.html || '',
     });
     log(`Email enviado para ${params.to}`, 'email-service');
     return true;
