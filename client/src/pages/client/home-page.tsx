@@ -29,6 +29,7 @@ export default function ClientHomePage() {
   // Get recent requests (up to 5)
   const recentRequests = requests?.slice(0, 5) || [];
   
+  // Colunas para desktop
   const requestColumns: ColumnDef<FreightRequestWithQuote>[] = [
     {
       accessorKey: "id",
@@ -57,6 +58,15 @@ export default function ClientHomePage() {
       cell: ({ row }) => row.original.pickupDate,
     },
     {
+      accessorKey: "cargo",
+      header: "Carga",
+      cell: ({ row }) => (
+        <span className="truncate max-w-[150px] block">
+          {row.original.cargoType}
+        </span>
+      ),
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
@@ -73,6 +83,49 @@ export default function ClientHomePage() {
               onClick={() => navigate(`/requests/${row.original.id}`)}
             >
               Detalhes
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+  
+  // Colunas para mobile - mais simplificado
+  const mobileRequestColumns: ColumnDef<FreightRequestWithQuote>[] = [
+    {
+      accessorKey: "route",
+      header: "Rota",
+      cell: ({ row }) => {
+        const request = row.original;
+        return (
+          <div>
+            <div className="font-medium">{request.origin}</div>
+            <div className="text-xs text-neutral-500 flex items-center">
+              <ArrowDown className="h-3 w-3 mr-1" />
+              <span>{request.destination}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        return (
+          <div className="text-right">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => navigate(`/requests/${row.original.id}`)}
+            >
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         );
@@ -148,19 +201,26 @@ export default function ClientHomePage() {
             <CardTitle className="text-lg font-medium text-neutral-700">Solicitações Recentes</CardTitle>
           </CardHeader>
           
-          {isLoading ? (
-            <CardContent>
-              <Skeleton className="h-64 w-full" />
+          <>
+            {/* Desktop Table */}
+            <CardContent className="p-0 hidden md:block">
+              <DataTable 
+                columns={requestColumns}
+                data={recentRequests}
+                isLoading={isLoading}
+              />
             </CardContent>
-          ) : (
-            <>
-              <CardContent className="p-0">
-                <DataTable 
-                  columns={requestColumns}
-                  data={recentRequests}
-                />
-              </CardContent>
-              
+
+            {/* Mobile Table */}
+            <CardContent className="p-0 md:hidden">
+              <DataTable 
+                columns={mobileRequestColumns}
+                data={recentRequests}
+                isLoading={isLoading}
+              />
+            </CardContent>
+            
+            {!isLoading && (
               <div className="p-4 border-t border-neutral-200">
                 <Button
                   variant="link"
@@ -171,8 +231,8 @@ export default function ClientHomePage() {
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>
-            </>
-          )}
+            )}
+          </>
         </Card>
       </main>
       
