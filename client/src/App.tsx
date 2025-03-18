@@ -37,6 +37,11 @@ function Router() {
         allowedRoles={["client"]} 
       />
       <ProtectedRoute 
+        path="/requests" 
+        component={ClientHomePage} 
+        allowedRoles={["client"]} 
+      />
+      <ProtectedRoute 
         path="/requests/:id" 
         component={RequestDetailsPage} 
         allowedRoles={["client"]} 

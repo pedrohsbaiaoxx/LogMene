@@ -19,7 +19,7 @@ export function BottomNavigation() {
         ) : (
           <>
             <NavItem href="/" icon={<Home />} label="Painel" />
-            <NavItem href="/" icon={<Package />} label="Solicitações" />
+            <NavItem href="/requests" icon={<Package />} label="Solicitações" />
             <NavItem href="/requests/new" icon={<PlusCircle />} label="Novo" />
             <NavItem href="/" icon={<Bell />} label="Avisos" />
           </>

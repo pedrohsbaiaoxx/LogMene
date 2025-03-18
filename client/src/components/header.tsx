@@ -38,7 +38,7 @@ export function Header({ title = "LogMene" }: HeaderProps) {
       ]
     : [
         { label: "Painel", href: "/", icon: <Truck className="h-5 w-5 mr-2" /> },
-        { label: "Minhas Solicitações", href: "/", icon: <Package className="h-5 w-5 mr-2" /> },
+        { label: "Minhas Solicitações", href: "/requests", icon: <Package className="h-5 w-5 mr-2" /> },
       ];
 
   return (
