@@ -8,8 +8,13 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { db } from "./db";
+import { eq, desc, and, isNull } from "drizzle-orm";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User operations
@@ -43,7 +48,276 @@ export interface IStorage {
   getUnreadNotificationsCount(userId: number): Promise<number>;
   
   // Session store
-  sessionStore: ReturnType<typeof createMemoryStore>;
+  sessionStore: any;
+}
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getAllClients(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'client'));
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result !== undefined;
+  }
+
+  async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {
+    const [request] = await db.insert(freightRequests).values(insertRequest).returning();
+    return request;
+  }
+
+  async getFreightRequestById(id: number): Promise<FreightRequestWithQuote | undefined> {
+    const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, id));
+    if (!request) return undefined;
+
+    const quote = await this.getQuoteByRequestId(id);
+    const user = await this.getUser(request.userId);
+    const deliveryProof = await this.getDeliveryProofByRequestId(id);
+
+    return {
+      ...request,
+      quote,
+      clientName: user?.fullName,
+      deliveryProof
+    };
+  }
+
+  async getFreightRequestsByUserId(userId: number): Promise<FreightRequestWithQuote[]> {
+    const requests = await db.select()
+      .from(freightRequests)
+      .where(eq(freightRequests.userId, userId))
+      .orderBy(desc(freightRequests.createdAt));
+    
+    const result = await Promise.all(
+      requests.map(async (request) => {
+        const quote = await this.getQuoteByRequestId(request.id);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
+        return {
+          ...request,
+          quote,
+          deliveryProof
+        };
+      })
+    );
+    
+    return result;
+  }
+
+  async getPendingFreightRequests(): Promise<FreightRequestWithQuote[]> {
+    const requests = await db.select()
+      .from(freightRequests)
+      .where(eq(freightRequests.status, "pending"))
+      .orderBy(desc(freightRequests.createdAt));
+    
+    const result = await Promise.all(
+      requests.map(async (request) => {
+        const user = await this.getUser(request.userId);
+        return {
+          ...request,
+          clientName: user?.fullName
+        };
+      })
+    );
+    
+    return result;
+  }
+
+  async getActiveFreightRequests(): Promise<FreightRequestWithQuote[]> {
+    const requests = await db.select()
+      .from(freightRequests)
+      .where(
+        and(
+          eq(freightRequests.status, "quoted"),
+          eq(freightRequests.status, "accepted")
+        )
+      )
+      .orderBy(desc(freightRequests.createdAt));
+    
+    const result = await Promise.all(
+      requests.map(async (request) => {
+        const quote = await this.getQuoteByRequestId(request.id);
+        const user = await this.getUser(request.userId);
+        return {
+          ...request,
+          quote,
+          clientName: user?.fullName
+        };
+      })
+    );
+    
+    return result;
+  }
+
+  async updateFreightRequestStatus(id: number, status: typeof requestStatus[number]): Promise<FreightRequest | undefined> {
+    const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, id));
+    if (!request) return undefined;
+
+    const [updatedRequest] = await db
+      .update(freightRequests)
+      .set({ status })
+      .where(eq(freightRequests.id, id))
+      .returning();
+    
+    // Criar notificação de mudança de status
+    let message = "";
+    switch (status) {
+      case "quoted":
+        message = "Uma nova cotação foi adicionada à sua solicitação de frete.";
+        break;
+      case "accepted":
+        message = "A cotação da sua solicitação de frete foi aceita.";
+        break;
+      case "rejected":
+        message = "A cotação da sua solicitação de frete foi rejeitada.";
+        break;
+      case "completed":
+        message = "Sua solicitação de frete foi marcada como concluída.";
+        break;
+      default:
+        message = `O status da sua solicitação de frete foi atualizado para ${status}.`;
+    }
+    
+    await this.createNotification({
+      userId: request.userId,
+      requestId: id,
+      type: "status_update",
+      message,
+      read: false
+    });
+    
+    return updatedRequest;
+  }
+
+  async createQuote(insertQuote: InsertQuote): Promise<Quote> {
+    const [quote] = await db.insert(quotes).values(insertQuote).returning();
+    
+    // Update freight request status to "quoted"
+    const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, insertQuote.requestId));
+    if (request) {
+      await db
+        .update(freightRequests)
+        .set({ status: "quoted" })
+        .where(eq(freightRequests.id, request.id));
+      
+      // Criar notificação para o cliente
+      await this.createNotification({
+        userId: request.userId,
+        requestId: request.id,
+        type: "quote_received",
+        message: "Uma nova cotação foi adicionada à sua solicitação de frete.",
+        read: false
+      });
+    }
+    
+    return quote;
+  }
+
+  async getQuoteByRequestId(requestId: number): Promise<Quote | undefined> {
+    const [quote] = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.requestId, requestId));
+    
+    return quote;
+  }
+
+  async createDeliveryProof(insertProof: InsertDeliveryProof): Promise<DeliveryProof> {
+    const [proof] = await db.insert(deliveryProofs).values(insertProof).returning();
+    
+    // Atualizar o status da solicitação para "completed"
+    const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, insertProof.requestId));
+    if (request) {
+      await db
+        .update(freightRequests)
+        .set({ status: "completed" })
+        .where(eq(freightRequests.id, request.id));
+      
+      // Criar notificação para o cliente
+      await this.createNotification({
+        userId: request.userId,
+        requestId: request.id,
+        type: "proof_uploaded",
+        message: "O comprovante de entrega da sua carga foi adicionado.",
+        read: false
+      });
+    }
+    
+    return proof;
+  }
+
+  async getDeliveryProofByRequestId(requestId: number): Promise<DeliveryProof | undefined> {
+    const [proof] = await db
+      .select()
+      .from(deliveryProofs)
+      .where(eq(deliveryProofs.requestId, requestId));
+    
+    return proof;
+  }
+
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(insertNotification).returning();
+    return notification;
+  }
+
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const [notification] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    
+    return notification;
+  }
+
+  async getUnreadNotificationsCount(userId: number): Promise<number> {
+    const unreadNotifications = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.read, false)
+        )
+      );
+    
+    return unreadNotifications.length;
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -439,4 +713,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
