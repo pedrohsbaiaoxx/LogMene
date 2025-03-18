@@ -25,15 +25,30 @@ export function ThemeSwitcher() {
     // Salvar no localStorage
     localStorage.setItem("theme", theme);
     
-    // Aplicar tema com base na escolha
+    // Aplicar tema com base na escolha, forçando o tema escuro em todo o documento
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
         : "light";
       root.classList.add(systemTheme);
+      
+      // Força a aplicação do tema em todos os elementos
+      document.body.className = systemTheme;
     } else {
       root.classList.add(theme);
+      
+      // Força a aplicação do tema em todos os elementos
+      document.body.className = theme;
+    }
+    
+    // Força a atualização de todas as propriedades CSS
+    if (theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      document.body.style.backgroundColor = "#0f172a"; // bg-slate-900
+      document.body.style.color = "#f8fafc"; // text-slate-50
+    } else {
+      document.body.style.backgroundColor = "";
+      document.body.style.color = "";
     }
   }, [theme]);
 

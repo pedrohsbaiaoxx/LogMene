@@ -2,36 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Forçar tema escuro globalmente */
+:root {
+  color-scheme: dark;
+}
+
+body, html {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-slate-900 text-slate-50;
   }
   
-  /* Aplica o modo escuro no corpo inteiro e em todo o HTML */
-  .dark,
-  .dark body,
-  .dark html,
-  .dark #root {
+  /* Aplica o modo escuro completamente no html e body */
+  html.dark,
+  body.dark {
     @apply bg-slate-900 text-slate-50;
   }
   
-  /* Força o fundo escuro em containers e outros elementos que podem ter o fundo customizado */
-  .dark div[class*="container"],
-  .dark div[class*="bg-background"],
-  .dark div[class*="bg-card"],
-  .dark div[class*="bg-white"] {
-    @apply bg-slate-900;
+  /* Força o fundo escuro em todos os elementos principais */
+  html.dark #root,
+  html.dark .container,
+  html.dark main,
+  html.dark header,
+  html.dark footer,
+  html.dark aside,
+  html.dark section,
+  html.dark .bg-background,
+  html.dark .bg-white,
+  html.dark .bg-card {
+    @apply bg-slate-900 text-slate-50;
+  }
+  
+  /* Força todos os cards, tabelas e elementos com fundo a usar o tema escuro */
+  html.dark .card,
+  html.dark .table,
+  html.dark .dropdown-content,
+  html.dark [data-radix-popper-content-wrapper],
+  html.dark [role="dialog"],
+  html.dark [role="tooltip"],
+  html.dark .popover {
+    @apply bg-slate-800 text-slate-50 border-slate-700;
   }
 
-  /* Estilos para campos de formulário no modo claro */
+  /* Estilos para campos de formulário forçando o modo escuro */
   input,
   textarea,
   select {
-    @apply bg-white text-gray-900 border-gray-300;
+    @apply bg-slate-800 text-slate-100 border-slate-700;
   }
   
   /* Força a cor do placeholder para ser legível no modo claro */
@@ -113,24 +138,35 @@
     @apply bg-slate-800 text-slate-100 border-slate-700;
   }
   
+  /* Estilização forçada de elementos específicos no modo escuro */
+  html.dark div, 
+  html.dark main, 
+  html.dark section, 
+  html.dark article, 
+  html.dark aside {
+    @apply bg-slate-900 text-slate-50;
+  }
+  
   /* Estilos para botões em modo escuro */
-  .dark .bg-primary {
+  html.dark .bg-primary {
     @apply bg-blue-700;
   }
   
-  .dark .hover\:bg-primary-light:hover {
+  html.dark .hover\:bg-primary-light:hover {
     @apply bg-blue-600;
   }
   
-  /* Estilos para o popover e dropdown no modo escuro */
-  .dark [data-radix-popper-content-wrapper] {
-    @apply bg-slate-800 text-slate-100 border-slate-700;
+  /* Estilos forçados para o popover e dropdown no modo escuro */
+  html.dark [data-radix-popper-content-wrapper] {
+    @apply bg-slate-800 text-slate-100 border-slate-700 !important;
   }
   
-  /* Certifica que todos os elementos no modo escuro usam cores apropriadas */
-  .dark *,
-  .dark *:before,
-  .dark *:after {
-    @apply border-slate-700;
+  /* Força aplicação do tema escuro em componentes específicos */
+  html.dark .card,
+  html.dark .container, 
+  html.dark .bg-white,
+  html.dark .bg-background,
+  html.dark [class*="bg-white"] {
+    @apply bg-slate-900 text-slate-50 !important;
   }
 }
