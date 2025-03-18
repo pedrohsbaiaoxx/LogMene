@@ -108,6 +108,8 @@ export function Header({ title = "LogMene" }: HeaderProps) {
 
         {/* Ações à direita */}
         <div className="flex items-center space-x-2">
+          <ThemeSwitcher />
+          
           {user && (
             <NotificationBell />
           )}

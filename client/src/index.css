@@ -14,8 +14,17 @@
   /* Aplica o modo escuro no corpo inteiro e em todo o HTML */
   .dark,
   .dark body,
-  .dark html {
+  .dark html,
+  .dark #root {
     @apply bg-slate-900 text-slate-50;
+  }
+  
+  /* Força o fundo escuro em containers e outros elementos que podem ter o fundo customizado */
+  .dark div[class*="container"],
+  .dark div[class*="bg-background"],
+  .dark div[class*="bg-card"],
+  .dark div[class*="bg-white"] {
+    @apply bg-slate-900;
   }
 
   /* Estilos para campos de formulário no modo claro */
@@ -95,7 +104,12 @@
   
   .dark .dropdown-menu,
   .dark .dropdown-content,
-  .dark .dialog-content {
+  .dark .dialog-content,
+  .dark .popover,
+  .dark .card,
+  .dark .sheet-content,
+  .dark .collapsible-content,
+  .dark [role="dialog"] {
     @apply bg-slate-800 text-slate-100 border-slate-700;
   }
   
