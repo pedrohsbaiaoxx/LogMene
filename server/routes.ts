@@ -87,7 +87,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enviar notificação para empresas sobre nova solicitação
       // Buscando usuários que são empresas para notificá-los
-      const companyUsers = await storage.getAllUsers().filter(user => user.role === "company");
+      const allUsers = await storage.getAllUsers();
+      const companyUsers = allUsers.filter(user => user.role === "company");
       if (companyUsers.length > 0) {
         // Usar o nome completo do cliente para a notificação
         const clientName = req.user!.fullName || req.user!.username;

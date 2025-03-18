@@ -52,7 +52,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
@@ -154,10 +154,7 @@ export class DatabaseStorage implements IStorage {
     const requests = await db.select()
       .from(freightRequests)
       .where(
-        and(
-          eq(freightRequests.status, "quoted"),
-          eq(freightRequests.status, "accepted")
-        )
+        eq(freightRequests.status, "quoted")
       )
       .orderBy(desc(freightRequests.createdAt));
     
