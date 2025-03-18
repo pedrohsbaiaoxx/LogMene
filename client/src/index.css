@@ -18,6 +18,13 @@
     @apply bg-white text-gray-900 border-gray-300;
   }
   
+  /* Força a cor do placeholder para ser legível no modo claro */
+  input::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    @apply text-gray-500;
+  }
+  
   /* Estilos específicos para o modo escuro */
   .dark {
     color-scheme: dark;

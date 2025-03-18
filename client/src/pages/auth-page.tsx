@@ -91,7 +91,7 @@ export default function AuthPage() {
           </div>
 
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
+            <h2 className="text-2xl font-semibold text-center mb-6 text-black dark:text-white">Login</h2>
             <div className="flex justify-center mb-4">
               <div className="flex space-x-4">
                 <Button
@@ -122,9 +122,9 @@ export default function AuthPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuário</FormLabel>
+                    <FormLabel className="text-black dark:text-white">Usuário</FormLabel>
                     <FormControl>
-                      <Input placeholder="Seu usuário" {...field} />
+                      <Input placeholder="Seu usuário" className="bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,11 +135,12 @@ export default function AuthPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senha</FormLabel>
+                    <FormLabel className="text-black dark:text-white">Senha</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Sua senha"
+                        className="bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                         {...field}
                       />
                     </FormControl>
