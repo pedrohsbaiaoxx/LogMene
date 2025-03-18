@@ -168,7 +168,7 @@ export default function CompanyRequestDetailsPage() {
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
-                  Concluir
+                  Finalizar Entrega
                 </Button>
               )}
             </div>
@@ -326,7 +326,8 @@ export default function CompanyRequestDetailsPage() {
               {!request.deliveryProof && (
                 <div className="mt-3 p-2 rounded bg-amber-50 border border-amber-200 text-amber-700">
                   <Clock className="inline-block h-4 w-4 mr-1" />
-                  Atenção: Esta solicitação ainda não possui um comprovante de entrega.
+                  Atenção: É recomendado enviar um comprovante de entrega antes de finalizar.
+                  <p className="mt-1 text-sm">Você pode enviar o comprovante após finalizar, mas é melhor fazê-lo antes.</p>
                 </div>
               )}
             </AlertDialogDescription>
