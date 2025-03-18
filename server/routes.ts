@@ -2,7 +2,13 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertFreightRequestSchema, insertQuoteSchema, insertUserSchema } from "@shared/schema";
+import { 
+  insertFreightRequestSchema, 
+  insertQuoteSchema, 
+  insertUserSchema, 
+  insertDeliveryProofSchema, 
+  insertNotificationSchema
+} from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -270,6 +276,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao excluir cliente:", error);
       res.status(500).json({ message: "Erro interno ao excluir cliente" });
+    }
+  });
+
+  // API para gerenciamento de notificações
+
+  // Get notifications for logged in user
+  app.get("/api/notifications", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const notifications = await storage.getNotificationsByUserId(userId);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar notificações" });
+    }
+  });
+
+  // Get unread notifications count
+  app.get("/api/notifications/count", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const count = await storage.getUnreadNotificationsCount(userId);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao contar notificações não lidas" });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/notifications/:id/read", ensureAuthenticated, async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ message: "ID de notificação inválido" });
+      }
+      
+      const notification = await storage.markNotificationAsRead(notificationId);
+      if (!notification) {
+        return res.status(404).json({ message: "Notificação não encontrada" });
+      }
+      
+      res.json(notification);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao marcar notificação como lida" });
+    }
+  });
+
+  // API para gerenciamento de comprovantes de entrega
+
+  // Upload delivery proof (company only)
+  app.post("/api/delivery-proofs", ensureCompany, async (req, res) => {
+    try {
+      const proofData = insertDeliveryProofSchema.parse(req.body);
+      
+      // Check if the request exists
+      const request = await storage.getFreightRequestById(proofData.requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Solicitação de frete não encontrada" });
+      }
+      
+      // Check if the current status is accepted
+      if (request.status !== "accepted") {
+        return res.status(400).json({ message: "Apenas solicitações aceitas podem receber comprovantes de entrega" });
+      }
+      
+      // Check if proof already exists
+      const existingProof = await storage.getDeliveryProofByRequestId(proofData.requestId);
+      if (existingProof) {
+        return res.status(400).json({ message: "Esta solicitação já possui um comprovante de entrega" });
+      }
+      
+      const proof = await storage.createDeliveryProof(proofData);
+      res.status(201).json(proof);
+    } catch (error) {
+      handleZodError(error, res);
+    }
+  });
+
+  // Get delivery proof by request ID
+  app.get("/api/requests/:id/delivery-proof", ensureAuthenticated, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      if (isNaN(requestId)) {
+        return res.status(400).json({ message: "ID de solicitação inválido" });
+      }
+      
+      // Check if the request exists
+      const request = await storage.getFreightRequestById(requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Solicitação de frete não encontrada" });
+      }
+      
+      // If user is client, check if it belongs to them
+      if (req.user!.role === "client" && request.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Você não tem acesso a esta solicitação" });
+      }
+      
+      const proof = await storage.getDeliveryProofByRequestId(requestId);
+      if (!proof) {
+        return res.status(404).json({ message: "Comprovante de entrega não encontrado" });
+      }
+      
+      res.json(proof);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar comprovante de entrega" });
+    }
+  });
+
+  // Serviço de Email para notificações
+  app.post("/api/send-email", ensureAuthenticated, async (req, res) => {
+    try {
+      const { to, subject, text, html } = req.body;
+      
+      // Verifica permissões - apenas usuários da empresa podem enviar emails
+      if (req.user!.role !== "company") {
+        return res.status(403).json({ message: "Apenas usuários da empresa podem enviar emails" });
+      }
+      
+      // Verifica campos obrigatórios
+      if (!to || !subject || (!text && !html)) {
+        return res.status(400).json({ message: "Campos obrigatórios: to, subject e (text ou html)" });
+      }
+
+      // Carrega módulo de email
+      const nodemailer = require("nodemailer");
+      
+      // Cria transporte para envio de email
+      const transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email", // Para testes - não enviará emails reais
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER || "ethereal.user@ethereal.email",
+          pass: process.env.EMAIL_PASS || "etherealpassword"
+        }
+      });
+      
+      // Configura email
+      const mailOptions = {
+        from: process.env.EMAIL_FROM || "logmene@example.com",
+        to,
+        subject,
+        text,
+        html
+      };
+      
+      // Enviar email (ou simular o envio em ambiente de teste)
+      const info = await transporter.sendMail(mailOptions);
+      
+      res.status(200).json({ 
+        message: "Email enviado com sucesso", 
+        messageId: info.messageId,
+        previewUrl: nodemailer.getTestMessageUrl(info)
+      });
+    } catch (error) {
+      console.error("Erro ao enviar email:", error);
+      res.status(500).json({ message: "Erro ao enviar email" });
     }
   });
 

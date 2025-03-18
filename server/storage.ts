@@ -183,11 +183,13 @@ export class MemStorage implements IStorage {
 
     const quote = await this.getQuoteByRequestId(id);
     const user = await this.getUser(request.userId);
+    const deliveryProof = await this.getDeliveryProofByRequestId(id);
 
     return {
       ...request,
       quote,
-      clientName: user?.fullName
+      clientName: user?.fullName,
+      deliveryProof
     };
   }
 
@@ -198,9 +200,11 @@ export class MemStorage implements IStorage {
     const result = await Promise.all(
       requests.map(async (request) => {
         const quote = await this.getQuoteByRequestId(request.id);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
         return {
           ...request,
-          quote
+          quote,
+          deliveryProof
         };
       })
     );
@@ -260,6 +264,34 @@ export class MemStorage implements IStorage {
     };
     
     this.freightRequests.set(id, updatedRequest);
+
+    // Criar notificação de mudança de status
+    let message = "";
+    switch (status) {
+      case "quoted":
+        message = "Uma nova cotação foi adicionada à sua solicitação de frete.";
+        break;
+      case "accepted":
+        message = "A cotação da sua solicitação de frete foi aceita.";
+        break;
+      case "rejected":
+        message = "A cotação da sua solicitação de frete foi rejeitada.";
+        break;
+      case "completed":
+        message = "Sua solicitação de frete foi marcada como concluída.";
+        break;
+      default:
+        message = `O status da sua solicitação de frete foi atualizado para ${status}.`;
+    }
+    
+    this.createNotification({
+      userId: request.userId,
+      requestId: id,
+      type: "status_update",
+      message,
+      read: false
+    });
+    
     return updatedRequest;
   }
 
@@ -287,6 +319,15 @@ export class MemStorage implements IStorage {
         status: "quoted" as const
       };
       this.freightRequests.set(request.id, updatedRequest);
+      
+      // Criar notificação para o cliente
+      this.createNotification({
+        userId: request.userId,
+        requestId: request.id,
+        type: "quote_received",
+        message: "Uma nova cotação foi adicionada à sua solicitação de frete.",
+        read: false
+      });
     }
     
     return quote;
@@ -347,8 +388,14 @@ export class MemStorage implements IStorage {
     const id = this.notificationCounter++;
     const createdAt = new Date();
     
+    // Garantir que campos opcionais não sejam undefined
+    const requestId = insertNotification.requestId === undefined ? null : insertNotification.requestId;
+    const read = insertNotification.read === undefined ? false : insertNotification.read;
+    
     const notification: Notification = { 
       ...insertNotification, 
+      requestId,
+      read,
       id, 
       createdAt 
     };
