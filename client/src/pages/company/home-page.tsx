@@ -129,7 +129,7 @@ export default function CompanyHomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-neutral-50">
-      <Header title="FreteApp" />
+      <Header title="LogMene" />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
