@@ -163,6 +163,18 @@ export default function ClientsPage() {
                     >
                       Ver Solicitações
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => {
+                        setClientToDelete(client);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
+                      <TrashIcon className="h-4 w-4 mr-1" />
+                      Excluir
+                    </Button>
                   </CardFooter>
                 </Card>
               ))
@@ -183,6 +195,46 @@ export default function ClientsPage() {
           </div>
         )}
       </main>
+      
+      {/* Modal de confirmação de exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-destructive">
+              <AlertTriangleIcon className="h-5 w-5 mr-2" />
+              Confirmar exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir o cliente <strong>{clientToDelete?.fullName}</strong>. 
+              <br /><br />
+              Esta ação também excluirá todas as solicitações de frete e cotações associadas a este cliente.
+              <br /><br />
+              Esta ação <strong>não pode ser desfeita</strong>. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (clientToDelete) {
+                  deleteClientMutation.mutate(clientToDelete.id);
+                }
+              }}
+              disabled={deleteClientMutation.isPending}
+            >
+              {deleteClientMutation.isPending ? (
+                <>
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Sim, excluir cliente"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
