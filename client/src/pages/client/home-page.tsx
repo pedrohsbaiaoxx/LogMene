@@ -1,0 +1,182 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
+import { Truck, ArrowDown, Package, CheckCircle, Clock, Plus, ArrowRight } from "lucide-react";
+import { Header } from "@/components/header";
+import { BottomNavigation } from "@/components/bottom-navigation";
+import { FreightRequestWithQuote } from "@shared/schema";
+import { StatusBadge } from "@/components/status-badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+
+export default function ClientHomePage() {
+  const [, navigate] = useLocation();
+  
+  const { data: requests, isLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/requests"],
+  });
+  
+  // Calculate statistics
+  const stats = {
+    totalRequests: requests?.length || 0,
+    pendingRequests: requests?.filter(req => req.status === "pending").length || 0,
+    quotedRequests: requests?.filter(req => req.status === "quoted").length || 0,
+    completedRequests: requests?.filter(req => req.status === "completed").length || 0,
+  };
+  
+  // Get recent requests (up to 5)
+  const recentRequests = requests?.slice(0, 5) || [];
+  
+  const requestColumns: ColumnDef<FreightRequestWithQuote>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <span className="font-medium">#{row.getValue("id")}</span>,
+    },
+    {
+      accessorKey: "route",
+      header: "Origem/Destino",
+      cell: ({ row }) => {
+        const request = row.original;
+        return (
+          <div>
+            <div>{request.origin}</div>
+            <div className="text-xs text-neutral-500 flex items-center">
+              <ArrowDown className="h-3 w-3 mr-1" />
+              <span>{request.destination}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "pickupDate",
+      header: "Data",
+      cell: ({ row }) => row.original.pickupDate,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Ações</div>,
+      cell: ({ row }) => {
+        return (
+          <div className="text-right">
+            <Button
+              variant="link"
+              className="h-8 px-2 text-primary"
+              onClick={() => navigate(`/requests/${row.original.id}`)}
+            >
+              Detalhes
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-neutral-50">
+      <Header />
+      
+      <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
+        <div className="mb-6 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-neutral-700">Painel do Cliente</h2>
+          <Button 
+            onClick={() => navigate("/requests/new")}
+            className="bg-[#FF8F00] hover:bg-[#F57C00] text-white shadow-md"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Nova Solicitação
+          </Button>
+        </div>
+        
+        {/* Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {isLoading ? (
+            <>
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </>
+          ) : (
+            <>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-neutral-700">Solicitações</h3>
+                    <Package className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-3xl font-bold text-primary">{stats.totalRequests}</p>
+                  <p className="text-sm text-neutral-500">Total de solicitações</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-neutral-700">Pendentes</h3>
+                    <Clock className="h-5 w-5 text-[#FF9800]" />
+                  </div>
+                  <p className="text-3xl font-bold text-[#FF9800]">{stats.pendingRequests + stats.quotedRequests}</p>
+                  <p className="text-sm text-neutral-500">Aguardando processo</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-neutral-700">Concluídas</h3>
+                    <CheckCircle className="h-5 w-5 text-[#4CAF50]" />
+                  </div>
+                  <p className="text-3xl font-bold text-[#4CAF50]">{stats.completedRequests}</p>
+                  <p className="text-sm text-neutral-500">Transportes finalizados</p>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+        
+        {/* Recent Requests Section */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-neutral-700">Solicitações Recentes</CardTitle>
+          </CardHeader>
+          
+          {isLoading ? (
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          ) : (
+            <>
+              <CardContent className="p-0">
+                <DataTable 
+                  columns={requestColumns}
+                  data={recentRequests}
+                />
+              </CardContent>
+              
+              <div className="p-4 border-t border-neutral-200">
+                <Button
+                  variant="link"
+                  className="text-primary p-0 h-auto font-medium text-sm"
+                  onClick={() => navigate("/requests")}
+                >
+                  Ver todas as solicitações
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </Card>
+      </main>
+      
+      <BottomNavigation />
+    </div>
+  );
+}
