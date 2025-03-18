@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type StatusBadgeProps = {
@@ -10,55 +11,51 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     switch (status) {
       case "pending":
         return {
-          text: "Pendente",
-          bgColor: "bg-warning/20",
-          textColor: "text-warning",
+          label: "Pendente",
+          variant: "outline",
+          className: "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
         };
       case "quoted":
         return {
-          text: "Cotado",
-          bgColor: "bg-info/20",
-          textColor: "text-info",
+          label: "Orçamento Enviado",
+          variant: "outline",
+          className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
         };
       case "accepted":
         return {
-          text: "Aceito",
-          bgColor: "bg-primary/20",
-          textColor: "text-primary",
+          label: "Aceito",
+          variant: "outline",
+          className: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
         };
       case "rejected":
         return {
-          text: "Recusado",
-          bgColor: "bg-destructive/20",
-          textColor: "text-destructive",
+          label: "Recusado",
+          variant: "outline",
+          className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
         };
       case "completed":
         return {
-          text: "Concluído",
-          bgColor: "bg-success/20",
-          textColor: "text-success",
+          label: "Concluído",
+          variant: "outline",
+          className: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
         };
       default:
         return {
-          text: status,
-          bgColor: "bg-neutral-200",
-          textColor: "text-neutral-700",
+          label: status,
+          variant: "outline",
+          className: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
         };
     }
   };
 
-  const { text, bgColor, textColor } = getStatusConfig(status);
+  const { label, className: statusClassName } = getStatusConfig(status);
 
   return (
-    <span
-      className={cn(
-        "px-2 py-1 rounded-md text-xs font-medium",
-        bgColor,
-        textColor,
-        className
-      )}
+    <Badge 
+      variant="outline" 
+      className={cn("font-medium capitalize", statusClassName, className)}
     >
-      {text}
-    </span>
+      {label}
+    </Badge>
   );
 }

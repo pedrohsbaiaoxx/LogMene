@@ -4,6 +4,7 @@ import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,6 +111,10 @@ export function Header({ title = "LogMene" }: HeaderProps) {
         {/* Ações à direita */}
         <div className="flex items-center space-x-2">
           <ThemeSwitcher />
+          
+          {user && (
+            <NotificationBell />
+          )}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

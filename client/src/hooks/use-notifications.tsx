@@ -19,7 +19,7 @@ export function useNotifications() {
   
   // Buscar contagem de notificações não lidas
   const { 
-    data: unreadCount = 0,
+    data: unreadCountData = { count: 0 },
     refetch: refetchCount
   } = useQuery<{ count: number }>({
     queryKey: ['/api/notifications/count'],
@@ -79,7 +79,7 @@ export function useNotifications() {
   
   return { 
     notifications,
-    unreadCount: unreadCount.count || 0,
+    unreadCount: unreadCountData.count,
     isLoading,
     error,
     refetch,
