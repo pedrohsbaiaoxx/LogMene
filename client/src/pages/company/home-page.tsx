@@ -113,7 +113,7 @@ export default function CompanyHomePage() {
               className="h-8 px-2 text-primary"
               onClick={() => {
                 if (isAccepted) {
-                  navigate(`/company/freights/${row.original.id}`);
+                  navigate(`/company/requests/${row.original.id}`);
                 } else {
                   navigate(`/company/quotes/${row.original.id}`);
                 }
