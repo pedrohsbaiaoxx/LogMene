@@ -114,7 +114,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
             Comprovante de Entrega
           </CardTitle>
           <CardDescription>
-            Enviado em {new Date(existingProof.createdAt).toLocaleDateString('pt-BR')}
+            Enviado em {existingProof.createdAt ? new Date(existingProof.createdAt).toLocaleDateString('pt-BR') : '-'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -171,7 +171,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="imageUrl"
+              name="proofImage"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>URL da Imagem</FormLabel>

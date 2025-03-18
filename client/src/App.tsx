@@ -10,6 +10,7 @@ import ClientHomePage from "@/pages/client/home-page";
 import CompanyHomePage from "@/pages/company/home-page";
 import NewRequestPage from "@/pages/client/new-request";
 import RequestDetailsPage from "@/pages/client/request-details";
+import CompanyRequestDetailsPage from "@/pages/company/request-details";
 import CreateQuotePage from "@/pages/company/create-quote";
 import ClientsPage from "@/pages/company/clients";
 import CreateClientPage from "@/pages/company/create-client";
@@ -54,6 +55,11 @@ function Router() {
       <ProtectedRoute 
         path="/company/create-client" 
         component={CreateClientPage} 
+        allowedRoles={["company"]} 
+      />
+      <ProtectedRoute 
+        path="/company/requests/:id" 
+        component={CompanyRequestDetailsPage} 
         allowedRoles={["company"]} 
       />
       

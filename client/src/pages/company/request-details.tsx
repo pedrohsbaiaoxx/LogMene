@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Flag, ArrowDownIcon, Package, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Flag, ArrowDownIcon, Package, CheckCircle, User, Clock } from "lucide-react";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { DeliveryProofUploader } from "@/components/delivery-proof-uploader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,58 +19,54 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { FreightRequestWithQuote } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function RequestDetailsPage() {
+export default function CompanyRequestDetailsPage() {
   const params = useParams();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [statusUpdateConfirmOpen, setStatusUpdateConfirmOpen] = useState(false);
-  const [statusToUpdate, setStatusToUpdate] = useState<"accepted" | "rejected">("accepted");
+  const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
   
   const requestId = params.id ? parseInt(params.id) : 0;
   
+  // Buscar detalhes da solicitação
   const { data: request, isLoading } = useQuery<FreightRequestWithQuote>({
     queryKey: [`/api/requests/${requestId}`],
     enabled: requestId > 0,
   });
 
-  // Update request status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async (status: string) => {
-      const res = await apiRequest("PATCH", `/api/requests/${requestId}/status`, { status });
+  // Mutation para marcar como concluído
+  const completeRequestMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("PATCH", `/api/company/requests/${requestId}/complete`, {});
       return res.json();
     },
     onSuccess: (data) => {
       toast({
-        title: statusToUpdate === "accepted" ? "Cotação aceita" : "Cotação recusada",
-        description: statusToUpdate === "accepted" 
-          ? "A transportadora foi notificada e processará seu frete." 
-          : "A solicitação foi recusada.",
+        title: "Solicitação concluída",
+        description: "A solicitação foi marcada como concluída e o cliente foi notificado.",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/company/active-requests"] });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Ocorreu um erro ao marcar a solicitação como concluída.",
         variant: "destructive",
       });
     },
   });
 
-  const handleStatusUpdate = (status: "accepted" | "rejected") => {
-    setStatusToUpdate(status);
-    setStatusUpdateConfirmOpen(true);
+  const handleComplete = () => {
+    setCompleteConfirmOpen(true);
   };
 
-  const confirmStatusUpdate = () => {
-    updateStatusMutation.mutate(statusToUpdate);
-    setStatusUpdateConfirmOpen(false);
+  const confirmComplete = () => {
+    completeRequestMutation.mutate();
+    setCompleteConfirmOpen(false);
   };
 
   if (isLoading) {
@@ -157,15 +153,39 @@ export default function RequestDetailsPage() {
           </Button>
         </div>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xl font-bold text-neutral-700">
-              Detalhes da Solicitação #{request.id}
+              Solicitação #{request.id}
             </CardTitle>
-            <StatusBadge status={request.status} />
+            <div className="flex items-center gap-2">
+              <StatusBadge status={request.status} />
+              
+              {request.status === "accepted" && (
+                <Button 
+                  size="sm"
+                  onClick={handleComplete}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Concluir
+                </Button>
+              )}
+            </div>
           </CardHeader>
           
           <CardContent>
+            {/* Cliente */}
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-neutral-700 mb-3 flex items-center">
+                <User className="mr-2 h-5 w-5 text-primary" />
+                Cliente
+              </h3>
+              <div className="p-3 rounded-md bg-neutral-100">
+                <p className="font-medium">{request.clientName || 'Cliente'}</p>
+              </div>
+            </div>
+            
             {/* Route Information */}
             <div className="mb-6">
               <h3 className="text-lg font-medium text-neutral-700 mb-3">Rota</h3>
@@ -214,7 +234,13 @@ export default function RequestDetailsPage() {
             {/* Dates */}
             <div className="mb-6">
               <h3 className="text-lg font-medium text-neutral-700 mb-3">Datas</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-neutral-500">Solicitado em</p>
+                  <p className="font-medium text-neutral-700">
+                    {request.createdAt && new Date(request.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
                 <div>
                   <p className="text-sm text-neutral-500">Retirada</p>
                   <p className="font-medium text-neutral-700">{request.pickupDate}</p>
@@ -225,11 +251,11 @@ export default function RequestDetailsPage() {
                 </div>
               </div>
             </div>
-            
-            {/* Quote Information (visible when status is "quoted") */}
-            {request.status === "quoted" && request.quote && (
-              <div className="mb-6 p-4 bg-[#2196F3]/5 rounded-lg border border-[#2196F3]/30">
-                <h3 className="text-lg font-medium text-neutral-700 mb-3">Cotação</h3>
+
+            {/* Quote Information */}
+            {request.quote && (
+              <div className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/30">
+                <h3 className="text-lg font-medium text-neutral-700 mb-3">Cotação Enviada</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-neutral-500">Valor</p>
@@ -252,128 +278,66 @@ export default function RequestDetailsPage() {
                     <p className="text-neutral-700">{request.quote.notes}</p>
                   </div>
                 )}
-                <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    className="mr-2"
-                    onClick={() => handleStatusUpdate("rejected")}
-                  >
-                    Recusar
-                  </Button>
-                  <Button
-                    className="bg-[#4CAF50] hover:bg-[#4CAF50]/90"
-                    onClick={() => handleStatusUpdate("accepted")}
-                  >
-                    Aceitar
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Accepted Status */}
-            {request.status === "accepted" && request.quote && (
-              <div className="mb-6 p-4 bg-[#4CAF50]/5 rounded-lg border border-[#4CAF50]/30">
-                <h3 className="text-lg font-medium text-neutral-700 mb-3">Frete Confirmado</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-neutral-500">Valor</p>
-                    <p className="font-medium text-neutral-700">{formatCurrency(request.quote.value)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Prazo Estimado</p>
-                    <p className="font-medium text-neutral-700">{request.quote.estimatedDays} dias</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-neutral-500">Entrega estimada até</p>
-                    <p className="font-medium text-neutral-700">
-                      {request.pickupDate}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-[#4CAF50]/10 p-3 rounded-md">
-                  <p className="text-[#4CAF50] font-medium">
-                    A transportadora está processando seu frete e entrará em contato para agendar a retirada.
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {/* Rejected Status */}
-            {request.status === "rejected" && (
-              <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
-                <h3 className="text-lg font-medium text-neutral-700 mb-3">Cotação Recusada</h3>
-                <p className="text-neutral-700">
-                  Você recusou a cotação para esta solicitação de frete.
-                </p>
-              </div>
-            )}
-            
-            {/* Completed Status */}
-            {request.status === "completed" && (
-              <div className="mb-6 p-4 bg-[#4CAF50]/5 rounded-lg border border-[#4CAF50]/30">
-                <h3 className="text-lg font-medium text-neutral-700 mb-3">Frete Concluído</h3>
-                <p className="text-[#4CAF50] font-medium">
-                  Este frete foi entregue e concluído com sucesso.
-                </p>
-              </div>
-            )}
-            
-            {/* Delivery Proof Section */}
-            {(request.status === "accepted" || request.status === "completed") && (
-              <div className="mb-6 mt-8">
-                <h3 className="text-lg font-medium text-neutral-700 mb-3">
-                  <div className="flex items-center">
-                    <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                    Comprovante de Entrega
-                  </div>
-                </h3>
-                <DeliveryProofUploader 
-                  requestId={request.id} 
-                  requestStatus={request.status}
-                  onSuccess={() => {
-                    toast({
-                      title: "Comprovante enviado",
-                      description: "O comprovante de entrega foi enviado com sucesso."
-                    });
-                    queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
-                  }}
-                />
               </div>
             )}
             
             {/* Notes */}
             {request.notes && (
-              <div className="mt-6">
+              <div className="mb-6">
                 <h3 className="text-lg font-medium text-neutral-700 mb-3">Observações</h3>
                 <p className="text-neutral-700">{request.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
+        
+        {/* Delivery Proof Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-neutral-700 mb-3">
+            <div className="flex items-center">
+              <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+              Comprovante de Entrega
+            </div>
+          </h3>
+          <DeliveryProofUploader 
+            requestId={request.id} 
+            requestStatus={request.status}
+            onSuccess={() => {
+              toast({
+                title: "Comprovante enviado",
+                description: "O comprovante de entrega foi enviado com sucesso e o cliente foi notificado."
+              });
+              queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
+            }}
+          />
+        </div>
       </main>
       
       <BottomNavigation />
       
-      {/* Confirm Status Update Dialog */}
-      <AlertDialog open={statusUpdateConfirmOpen} onOpenChange={setStatusUpdateConfirmOpen}>
+      {/* Confirm Complete Dialog */}
+      <AlertDialog open={completeConfirmOpen} onOpenChange={setCompleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {statusToUpdate === "accepted" ? "Aceitar cotação?" : "Recusar cotação?"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Marcar solicitação como concluída?</AlertDialogTitle>
             <AlertDialogDescription>
-              {statusToUpdate === "accepted" 
-                ? "Ao aceitar a cotação, você confirma o frete pelo valor proposto. A transportadora será notificada." 
-                : "Ao recusar a cotação, esta solicitação será cancelada."}
+              Isso indicará que a entrega foi realizada com sucesso. 
+              O cliente receberá uma notificação sobre a conclusão do frete.
+              {!request.deliveryProof && (
+                <div className="mt-3 p-2 rounded bg-amber-50 border border-amber-200 text-amber-700">
+                  <Clock className="inline-block h-4 w-4 mr-1" />
+                  Atenção: Esta solicitação ainda não possui um comprovante de entrega.
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmStatusUpdate}
-              className={statusToUpdate === "accepted" ? "bg-[#4CAF50] hover:bg-[#4CAF50]/90" : ""}
+              onClick={confirmComplete}
+              className="bg-green-600 hover:bg-green-700"
             >
-              Confirmar
+              Confirmar Conclusão
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
