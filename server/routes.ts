@@ -29,18 +29,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Middleware to check if user is a client
   const ensureClient = (req: Request, res: Response, next: NextFunction) => {
-    if (req.isAuthenticated() && req.user.role === "client") {
-      return next();
+    console.log("User in ensureClient:", req.user);
+    console.log("Is authenticated:", req.isAuthenticated());
+    
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please log in" });
     }
-    res.status(403).json({ message: "Forbidden: Client access required" });
+    
+    if (req.user?.role !== "client") {
+      return res.status(403).json({ message: `Forbidden: Client access required. Current role: ${req.user?.role || 'undefined'}` });
+    }
+    
+    return next();
   };
 
   // Middleware to check if user is a company
   const ensureCompany = (req: Request, res: Response, next: NextFunction) => {
-    if (req.isAuthenticated() && req.user.role === "company") {
-      return next();
+    console.log("User in ensureCompany:", req.user);
+    console.log("Is authenticated:", req.isAuthenticated());
+    
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please log in" });
     }
-    res.status(403).json({ message: "Forbidden: Company access required" });
+    
+    if (req.user?.role !== "company") {
+      return res.status(403).json({ message: `Forbidden: Company access required. Current role: ${req.user?.role || 'undefined'}` });
+    }
+    
+    return next();
   };
 
   // Create a freight request (client only)
