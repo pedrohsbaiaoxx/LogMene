@@ -45,6 +45,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<Notification | undefined>;
+  markAllNotificationsAsRead(userId: number): Promise<number>;
   getUnreadNotificationsCount(userId: number): Promise<number>;
   
   // Session store
@@ -300,6 +301,19 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return notification;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<number> {
+    const result = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false)
+      ))
+      .returning();
+    
+    return result.length;
   }
 
   async getUnreadNotificationsCount(userId: number): Promise<number> {
@@ -702,6 +716,22 @@ export class MemStorage implements IStorage {
     
     this.notifications.set(id, updatedNotification);
     return updatedNotification;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<number> {
+    const userNotifications = Array.from(this.notifications.values())
+      .filter(notification => notification.userId === userId && !notification.read);
+    
+    let count = 0;
+    for (const notification of userNotifications) {
+      this.notifications.set(notification.id, {
+        ...notification,
+        read: true
+      });
+      count++;
+    }
+    
+    return count;
   }
 
   async getUnreadNotificationsCount(userId: number): Promise<number> {
