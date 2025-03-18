@@ -62,7 +62,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a freight request (client only)
   app.post("/api/requests", ensureClient, async (req, res) => {
     try {
-      const userId = req.user.id;
+      // req.user é garantido existir pelo middleware ensureClient
+      const userId = req.user!.id;
       const requestData = insertFreightRequestSchema.parse({
         ...req.body,
         userId
@@ -77,7 +78,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all freight requests for the logged-in client
   app.get("/api/requests", ensureClient, async (req, res) => {
-    const userId = req.user.id;
+    // req.user é garantido existir pelo middleware ensureClient
+    const userId = req.user!.id;
     const requests = await storage.getFreightRequestsByUserId(userId);
     res.json(requests);
   });
@@ -96,8 +98,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Freight request not found" });
     }
     
+    // req.user é garantido existir pelo middleware ensureAuthenticated
     // Check if the user has access to this request
-    if (req.user.role === "client" && request.userId !== req.user.id) {
+    if (req.user!.role === "client" && request.userId !== req.user!.id) {
       return res.status(403).json({ message: "You don't have access to this request" });
     }
     
@@ -158,7 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Freight request not found" });
     }
     
-    if (request.userId !== req.user.id) {
+    // req.user é garantido existir pelo middleware ensureClient
+    if (request.userId !== req.user!.id) {
       return res.status(403).json({ message: "You don't have access to this request" });
     }
     
