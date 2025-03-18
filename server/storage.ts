@@ -23,7 +23,7 @@ export interface IStorage {
   getQuoteByRequestId(requestId: number): Promise<Quote | undefined>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: ReturnType<typeof createMemoryStore>;
 }
 
 export class MemStorage implements IStorage {
@@ -33,7 +33,7 @@ export class MemStorage implements IStorage {
   private userCounter: number;
   private requestCounter: number;
   private quoteCounter: number;
-  sessionStore: session.SessionStore;
+  sessionStore: ReturnType<typeof createMemoryStore>;
 
   constructor() {
     this.users = new Map();

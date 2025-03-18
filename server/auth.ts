@@ -41,11 +41,14 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "freight-management-secret",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      secure: false, // set to true in production with HTTPS
+      sameSite: 'lax'
     }
   };
 
@@ -95,10 +98,26 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    // Remove password from response
-    const { password, ...user } = req.user as SelectUser;
-    res.status(200).json(user);
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: any) => {
+      if (err) {
+        return next(err);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+      
+      req.login(user, (loginErr: Error | null) => {
+        if (loginErr) {
+          return next(loginErr);
+        }
+        
+        // Remove password from response
+        const { password, ...userWithoutPassword } = user;
+        return res.status(200).json(userWithoutPassword);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
