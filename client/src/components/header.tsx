@@ -1,4 +1,4 @@
-import { Menu, Package, LogOut, User, Truck, Settings } from "lucide-react";
+import { Menu, Package, LogOut, User, Truck } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -35,12 +35,10 @@ export function Header({ title = "LogMene" }: HeaderProps) {
     ? [
         { label: "Painel", href: "/", icon: <Truck className="h-5 w-5 mr-2" /> },
         { label: "Clientes", href: "/company/clients", icon: <User className="h-5 w-5 mr-2" /> },
-        { label: "Configurações", href: "/settings", icon: <Settings className="h-5 w-5 mr-2" /> },
       ]
     : [
         { label: "Painel", href: "/", icon: <Truck className="h-5 w-5 mr-2" /> },
         { label: "Minhas Solicitações", href: "/", icon: <Package className="h-5 w-5 mr-2" /> },
-        { label: "Configurações", href: "/settings", icon: <Settings className="h-5 w-5 mr-2" /> },
       ];
 
   return (
@@ -110,8 +108,6 @@ export function Header({ title = "LogMene" }: HeaderProps) {
 
         {/* Ações à direita */}
         <div className="flex items-center space-x-2">
-          <ThemeSwitcher />
-          
           {user && (
             <NotificationBell />
           )}

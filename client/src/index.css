@@ -10,6 +10,13 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* Aplica o modo escuro no corpo inteiro e em todo o HTML */
+  .dark,
+  .dark body,
+  .dark html {
+    @apply bg-slate-900 text-slate-50;
+  }
 
   /* Estilos para campos de formulário no modo claro */
   input,
