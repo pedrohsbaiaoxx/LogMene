@@ -30,7 +30,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 // Esquema de validação para o formulário de upload
 const deliveryProofSchema = z.object({
-  imageUrl: z.string().min(5, {
+  proofImage: z.string().min(5, {
     message: "URL da imagem deve ter pelo menos 5 caracteres",
   }),
   notes: z.string().optional(),
@@ -64,7 +64,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
   const form = useForm<z.infer<typeof deliveryProofSchema>>({
     resolver: zodResolver(deliveryProofSchema),
     defaultValues: {
-      imageUrl: "",
+      proofImage: "",
       notes: "",
     },
   });
@@ -74,7 +74,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
     mutationFn: async (values: z.infer<typeof deliveryProofSchema>) => {
       const response = await apiRequest("POST", "/api/delivery-proofs", {
         requestId,
-        imageUrl: values.imageUrl,
+        proofImage: values.proofImage,
         notes: values.notes || "",
       });
       
@@ -120,7 +120,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
         <CardContent className="space-y-4">
           <div className="aspect-video rounded-md overflow-hidden border bg-muted/20">
             <img 
-              src={existingProof.imageUrl} 
+              src={existingProof.proofImage} 
               alt="Comprovante de entrega" 
               className="w-full h-full object-cover"
             />

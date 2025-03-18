@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Flag, ArrowDownIcon } from "lucide-react";
+import { ArrowLeft, MapPin, Flag, ArrowDownIcon, Package, CheckCircle } from "lucide-react";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
+import { DeliveryProofUploader } from "@/components/delivery-proof-uploader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -316,9 +317,32 @@ export default function RequestDetailsPage() {
               </div>
             )}
             
+            {/* Delivery Proof Section */}
+            {(request.status === "accepted" || request.status === "completed") && (
+              <div className="mb-6 mt-8">
+                <h3 className="text-lg font-medium text-neutral-700 mb-3">
+                  <div className="flex items-center">
+                    <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                    Comprovante de Entrega
+                  </div>
+                </h3>
+                <DeliveryProofUploader 
+                  requestId={request.id} 
+                  requestStatus={request.status}
+                  onSuccess={() => {
+                    toast({
+                      title: "Comprovante enviado",
+                      description: "O comprovante de entrega foi enviado com sucesso."
+                    });
+                    queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
+                  }}
+                />
+              </div>
+            )}
+            
             {/* Notes */}
             {request.notes && (
-              <div>
+              <div className="mt-6">
                 <h3 className="text-lg font-medium text-neutral-700 mb-3">Observações</h3>
                 <p className="text-neutral-700">{request.notes}</p>
               </div>
