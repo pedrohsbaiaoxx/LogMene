@@ -365,6 +365,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao marcar notificação como lida" });
     }
   });
+  
+  // Mark all notifications as read for a user
+  app.patch("/api/notifications/mark-all-read", ensureAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const updatedCount = await storage.markAllNotificationsAsRead(userId);
+      
+      res.json({ success: true, count: updatedCount });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao marcar todas notificações como lidas" });
+    }
+  });
 
   // API para gerenciamento de comprovantes de entrega
 
