@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { BarChart2, PieChart, TruckIcon, CheckCircle, AlertCircle, ArrowDown } from "lucide-react";
+import { BarChart2, PieChart, TruckIcon, CheckCircle, AlertCircle, ArrowDown, Users } from "lucide-react";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { FreightRequestWithQuote } from "@shared/schema";
@@ -132,7 +132,20 @@ export default function CompanyHomePage() {
       <Header title="FreteApp" />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
-        <h2 className="text-2xl font-bold text-neutral-700 mb-6">Painel da Transportadora</h2>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h2 className="text-2xl font-bold text-neutral-700">Painel da Transportadora</h2>
+          
+          <div className="mt-3 md:mt-0">
+            <Button 
+              onClick={() => navigate("/company/clients")} 
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <Users className="h-4 w-4" />
+              Gerenciar Clientes
+            </Button>
+          </div>
+        </div>
         
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

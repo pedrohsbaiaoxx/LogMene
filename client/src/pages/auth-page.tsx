@@ -150,7 +150,7 @@ export default function AuthPage() {
       </div>
 
       {/* Hero Section */}
-      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-r from-primary to-primary-dark">
+      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-r from-blue-600 to-purple-700">
         <div className="flex flex-col justify-center h-full px-12 text-white">
           <div className="max-w-md">
             <h2 className="text-4xl font-bold mb-4">
@@ -162,16 +162,20 @@ export default function AuthPage() {
             </p>
             <ul className="space-y-2">
               <li className="flex items-center">
-                <span className="mr-2">✓</span> Solicite fretes facilmente
+                <span className="mr-2 bg-white bg-opacity-20 rounded-full w-5 h-5 flex items-center justify-center text-sm">✓</span> 
+                <span>Solicite fretes facilmente</span>
               </li>
               <li className="flex items-center">
-                <span className="mr-2">✓</span> Receba cotações competitivas
+                <span className="mr-2 bg-white bg-opacity-20 rounded-full w-5 h-5 flex items-center justify-center text-sm">✓</span> 
+                <span>Receba cotações competitivas</span>
               </li>
               <li className="flex items-center">
-                <span className="mr-2">✓</span> Acompanhe suas entregas em tempo real
+                <span className="mr-2 bg-white bg-opacity-20 rounded-full w-5 h-5 flex items-center justify-center text-sm">✓</span> 
+                <span>Acompanhe suas entregas em tempo real</span>
               </li>
               <li className="flex items-center">
-                <span className="mr-2">✓</span> Acesse histórico de solicitações
+                <span className="mr-2 bg-white bg-opacity-20 rounded-full w-5 h-5 flex items-center justify-center text-sm">✓</span> 
+                <span>Acesse histórico de solicitações</span>
               </li>
             </ul>
           </div>

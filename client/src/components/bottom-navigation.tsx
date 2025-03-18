@@ -12,8 +12,8 @@ export function BottomNavigation() {
         {isCompany ? (
           <>
             <NavItem href="/" icon={<Home />} label="Painel" />
-            <NavItem href="/" icon={<Package />} label="Novas" />
-            <NavItem href="/" icon={<Truck />} label="Em Andamento" />
+            <NavItem href="/company/clients" icon={<Package />} label="Clientes" />
+            <NavItem href="/" icon={<Truck />} label="Fretes" />
             <NavItem href="/" icon={<BarChart2 />} label="Relatórios" />
           </>
         ) : (
@@ -38,13 +38,15 @@ type NavItemProps = {
 
 function NavItem({ href, icon, label, isActive = false }: NavItemProps) {
   return (
-    <Link href={href}>
-      <a className={`flex flex-col items-center py-2 px-4 ${isActive ? 'text-primary' : 'text-neutral-500 hover:text-primary'}`}>
-        <div className="text-current">
-          {icon}
+    <div className="flex-1">
+      <Link href={href}>
+        <div className={`flex flex-col items-center py-2 px-4 ${isActive ? 'text-primary' : 'text-neutral-500 hover:text-primary'} cursor-pointer`}>
+          <div className="text-current">
+            {icon}
+          </div>
+          <span className="text-xs mt-1">{label}</span>
         </div>
-        <span className="text-xs mt-1">{label}</span>
-      </a>
-    </Link>
+      </Link>
+    </div>
   );
 }
