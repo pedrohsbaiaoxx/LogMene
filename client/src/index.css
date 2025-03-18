@@ -29,4 +29,28 @@
   .dark .text-muted-foreground {
     @apply text-slate-400;
   }
+  
+  /* Estilos para formulários em modo escuro */
+  .dark .bg-background {
+    @apply bg-slate-900;
+  }
+  
+  .dark .border-input {
+    @apply border-slate-700;
+  }
+  
+  .dark input,
+  .dark textarea,
+  .dark select {
+    @apply bg-slate-800 text-slate-100;
+  }
+  
+  /* Estilos para botões em modo escuro */
+  .dark .bg-primary {
+    @apply bg-blue-700;
+  }
+  
+  .dark .hover\:bg-primary-light:hover {
+    @apply bg-blue-600;
+  }
 }
