@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Truck, ArrowDown, Package, CheckCircle, Clock, Plus, ArrowRight } from "lucide-react";
+import { Truck, ArrowDown, Package, CheckCircle, Clock, Plus, ArrowRight, FileText } from "lucide-react";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { FreightRequestWithQuote } from "@shared/schema";
@@ -281,7 +281,7 @@ export default function ClientHomePage() {
             )}
             
             {!isLoading && (
-              <div className="p-4 border-t border-neutral-200">
+              <div className="p-4 border-t border-neutral-200 flex justify-between">
                 <Button
                   variant="link"
                   className="text-primary p-0 h-auto font-medium text-sm"
@@ -289,6 +289,15 @@ export default function ClientHomePage() {
                 >
                   Ver todas as solicitações
                   <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="link"
+                  className="text-primary p-0 h-auto font-medium text-sm"
+                  onClick={() => navigate("/reports")}
+                >
+                  Acessar relatórios
+                  <FileText className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             )}
