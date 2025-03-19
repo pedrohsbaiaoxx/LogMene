@@ -44,6 +44,7 @@ export const freightRequests = pgTable("freight_requests", {
   requireInsurance: boolean("require_insurance").default(false),
   status: text("status", { enum: requestStatus }).notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
 });
 
 export const insertFreightRequestSchema = createInsertSchema(freightRequests).pick({

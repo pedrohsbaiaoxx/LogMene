@@ -238,9 +238,14 @@ export class DatabaseStorage implements IStorage {
     const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, id));
     if (!request) return undefined;
 
+    // Se o status for "completed", registre a data de conclusão
+    const updateData = status === "completed" 
+      ? { status, completedAt: new Date() }
+      : { status };
+
     const [updatedRequest] = await db
       .update(freightRequests)
-      .set({ status })
+      .set(updateData)
       .where(eq(freightRequests.id, id))
       .returning();
     
@@ -644,7 +649,9 @@ export class MemStorage implements IStorage {
 
     const updatedRequest = {
       ...request,
-      status
+      status,
+      // Se o status for "completed", registre a data de conclusão
+      ...(status === "completed" ? { completedAt: new Date() } : {})
     };
     
     this.freightRequests.set(id, updatedRequest);
