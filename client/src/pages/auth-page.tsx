@@ -97,14 +97,18 @@ export default function AuthPage() {
                 <Button
                   variant={userType === "client" ? "default" : "outline"}
                   onClick={() => setUserType("client")}
-                  className="px-4 py-2"
+                  className={`px-4 py-2 ${userType === "client" 
+                    ? "bg-primary text-white" 
+                    : "bg-transparent text-gray-800 border-gray-300 hover:text-gray-900 hover:bg-gray-100"}`}
                 >
                   Cliente
                 </Button>
                 <Button
                   variant={userType === "company" ? "default" : "outline"}
                   onClick={() => setUserType("company")}
-                  className="px-4 py-2"
+                  className={`px-4 py-2 ${userType === "company" 
+                    ? "bg-primary text-white" 
+                    : "bg-transparent text-gray-800 border-gray-300 hover:text-gray-900 hover:bg-gray-100"}`}
                 >
                   Transportadora
                 </Button>
