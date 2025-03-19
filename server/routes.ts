@@ -1312,6 +1312,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Rota para testar o envio direto de WhatsApp em modo de produção
+  app.post('/api/test/whatsapp', ensureAuthenticated, async (req, res) => {
+    const { phoneNumber, message } = req.body;
+    
+    if (!phoneNumber || !message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Número de telefone e mensagem são obrigatórios' 
+      });
+    }
+    
+    log(`MODO DE PRODUÇÃO: Iniciando teste de envio de WhatsApp para ${phoneNumber}`, 'test-whatsapp-production');
+    log(`Mensagem: ${message}`, 'test-whatsapp-production');
+    
+    try {
+      // Enviando mensagem diretamente pelo serviço WhatsApp
+      log(`Enviando WhatsApp diretamente para ${phoneNumber} em MODO DE PRODUÇÃO`, 'test-whatsapp-production');
+      const result = await sendWhatsApp(phoneNumber, message);
+      
+      if (result) {
+        log(`WhatsApp enviado com sucesso para ${phoneNumber} em MODO DE PRODUÇÃO`, 'test-whatsapp-production');
+        return res.json({ 
+          success: true, 
+          message: 'WhatsApp enviado com sucesso em modo de produção',
+          phoneNumber,
+          messageContent: message
+        });
+      } else {
+        log(`Falha ao enviar WhatsApp para ${phoneNumber}`, 'test-whatsapp-production');
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Falha ao enviar WhatsApp. Verifique os logs do servidor para mais detalhes.',
+          error: 'O serviço de WhatsApp retornou falha'
+        });
+      }
+    } catch (error) {
+      log(`ERRO CRÍTICO ao testar envio de WhatsApp em MODO DE PRODUÇÃO: ${error}`, 'test-whatsapp-production');
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao enviar WhatsApp',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Rota para testar o serviço de notificações
   app.post('/api/test/notification', async (req, res) => {
