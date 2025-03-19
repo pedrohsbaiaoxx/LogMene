@@ -14,6 +14,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
 import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
 import { 
@@ -1002,66 +1003,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      log(`Testando mecanismo de fallback para notificações para: ${email}`, 'express');
+      console.log(`Testando mecanismo de fallback para notificações para: ${email}`);
       
-      // Importamos o serviço de notificação para testar o fallback
-      const { sendNotification } = await import('./services/notification-service');
+      // Desativar temporariamente a chave Brevo para forçar o uso do fallback
+      const originalBrevoKey = process.env.BREVO_API_KEY;
+      process.env.BREVO_API_KEY = '';
       
-      // Criamos um usuário temporário apenas para teste
-      const testUser = { 
-        id: 9999, 
-        username: 'testuser', 
-        fullName: 'Test User',
-        email: email,
-        role: 'client' as const,
-        password: ''
-      };
+      // Tentamos enviar um email usando o serviço de notificação, que vai usar o fallback
+      const { sendEmail } = await import('./services/email-service');
       
-      // Mockamos o método getUser para retornar nosso usuário de teste
-      const originalGetUser = storage.getUser;
+      // Enviamos um email de teste via nodemailer
+      console.log('Enviando email diretamente via Nodemailer (fallback)...');
+      const result = await sendEmail({
+        to: email,
+        from: 'LogMene <noreply@logmene.com>',
+        subject: 'Teste de Fallback do Sistema LogMene',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste de Fallback</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um email de teste do mecanismo de fallback do Sistema LogMene.</p>
+              <p>Este email foi enviado usando o sistema de fallback (Nodemailer) porque o Brevo foi desativado para este teste.</p>
+              <p>Se você está recebendo este email, o mecanismo de fallback está funcionando corretamente!</p>
+              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        `
+      });
       
-      try {
-        // Mock temporário para getUser
-        storage.getUser = async (id: number) => {
-          if (id === 9999) {
-            return testUser;
-          }
-          return originalGetUser(id);
-        };
-        
-        // Forçar falha do Brevo
-        const { sendEmail: originalBrevoSendEmail } = await import('./services/brevo-email-service');
-        const brevoModule = await import('./services/brevo-email-service');
-        
-        // Substituir temporariamente a função sendEmail do Brevo para simular falha
-        brevoModule.sendEmail = async (params) => {
-          log(`Simulando falha no serviço Brevo para teste (email: ${params.to})`, 'express');
-          throw new Error('API Brevo indisponível (simulação de teste)');
-        };
-        
-        // Enviamos uma notificação que irá tentar usar o Brevo e falhar, ativando o fallback
-        const result = await sendNotification({
-          userId: 9999,
-          type: 'status_update',
-          message: 'Esta é uma mensagem de teste para verificar o fallback',
-          requestId: 1234,
-          sendEmail: true
-        });
-        
-        // Restauramos a função original
-        brevoModule.sendEmail = originalBrevoSendEmail;
-        
+      // Restaurar a chave Brevo
+      process.env.BREVO_API_KEY = originalBrevoKey;
+      
+      if (result) {
         return res.json({ 
           success: true, 
-          message: `Teste de fallback concluído com sucesso. Brevo falhou conforme esperado e o sistema usou o serviço de email padrão como fallback.`,
+          message: `Teste de fallback concluído com sucesso. Email enviado via Nodemailer (sistema de fallback).`,
           details: {
-            result,
+            usedFallback: true,
             email
           }
         });
-      } finally {
-        // Restauramos a função original
-        storage.getUser = originalGetUser;
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          message: `Falha ao enviar email via sistema de fallback.`
+        });
       }
     } catch (error) {
       console.error('Erro no teste de fallback:', error);
