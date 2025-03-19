@@ -166,7 +166,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a quote for a freight request (company only)
   app.post("/api/quotes", ensureCompany, async (req, res) => {
     try {
-      const quoteData = insertQuoteSchema.parse(req.body);
+      // Modificar o schema para permitir campos opcionais
+      const modifiedSchema = insertQuoteSchema.extend({
+        value: z.number().min(0).optional(),
+        estimatedDays: z.number().min(1).optional(),
+      });
+      
+      const quoteData = modifiedSchema.parse(req.body);
       
       // Check if the request exists
       const request = await storage.getFreightRequestById(quoteData.requestId);
@@ -186,7 +192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enviamos notificação ao cliente
       if (updatedRequest) {
-        sendQuoteNotification(updatedRequest.userId, quoteData.requestId, quoteData.value);
+        // Use o valor da cotação se disponível, ou "não especificado" se não for fornecido
+        const quoteValue = quoteData.value !== undefined ? quoteData.value : 0;
+        sendQuoteNotification(updatedRequest.userId, quoteData.requestId, quoteValue);
       }
       
       res.status(201).json(quote);

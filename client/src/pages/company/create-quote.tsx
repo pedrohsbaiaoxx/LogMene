@@ -23,9 +23,13 @@ import { useToast } from "@/hooks/use-toast";
 import { insertQuoteSchema, FreightRequestWithQuote } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Define the form schema based on the quote schema
+// Define the form schema based on the quote schema with optional fields
 const formSchema = insertQuoteSchema.omit({ 
   requestId: true,
+})
+.extend({
+  value: z.number().min(0, "O valor não pode ser negativo").optional(),
+  estimatedDays: z.number().min(1, "O prazo de entrega deve ser de pelo menos 1 dia").optional(),
 });
 
 export default function CreateQuotePage() {
@@ -44,8 +48,8 @@ export default function CreateQuotePage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      value: 0,
-      estimatedDays: 1,
+      value: undefined,
+      estimatedDays: undefined,
       notes: "",
     },
   });
