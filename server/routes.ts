@@ -127,6 +127,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const requests = await storage.getFreightRequestsByUserId(userId);
     res.json(requests);
   });
+  
+  // Get active requests (in progress) for logged-in client
+  app.get("/api/client/active-requests", ensureClient, async (req, res) => {
+    const allRequests = await storage.getFreightRequestsByUserId(req.user!.id);
+    const activeRequests = allRequests.filter(request => request.status === "accepted");
+    res.json(activeRequests);
+  });
+  
+  // Get completed requests for logged-in client
+  app.get("/api/client/completed-requests", ensureClient, async (req, res) => {
+    const allRequests = await storage.getFreightRequestsByUserId(req.user!.id);
+    const completedRequests = allRequests.filter(request => request.status === "completed");
+    res.json(completedRequests);
+  });
 
   // Get freight request details
   app.get("/api/requests/:id", ensureAuthenticated, async (req, res) => {
@@ -160,6 +174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get active freight requests (company only)
   app.get("/api/company/active-requests", ensureCompany, async (req, res) => {
     const requests = await storage.getActiveFreightRequests();
+    res.json(requests);
+  });
+  
+  // Get completed freight requests (company only)
+  app.get("/api/company/completed-requests", ensureCompany, async (req, res) => {
+    const requests = await storage.getCompletedFreightRequests();
     res.json(requests);
   });
 

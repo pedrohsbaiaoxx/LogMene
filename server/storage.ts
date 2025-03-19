@@ -31,6 +31,7 @@ export interface IStorage {
   getFreightRequestsByUserId(userId: number): Promise<FreightRequestWithQuote[]>;
   getPendingFreightRequests(): Promise<FreightRequestWithQuote[]>;
   getActiveFreightRequests(): Promise<FreightRequestWithQuote[]>;
+  getCompletedFreightRequests(): Promise<FreightRequestWithQuote[]>;
   updateFreightRequestStatus(id: number, status: typeof requestStatus[number]): Promise<FreightRequest | undefined>;
   
   // Quote operations
@@ -190,12 +191,30 @@ export class DatabaseStorage implements IStorage {
   async getActiveFreightRequests(): Promise<FreightRequestWithQuote[]> {
     const requests = await db.select()
       .from(freightRequests)
-      .where(
-        or(
-          eq(freightRequests.status, "quoted"),
-          eq(freightRequests.status, "accepted")
-        )
-      )
+      .where(eq(freightRequests.status, "accepted"))
+      .orderBy(desc(freightRequests.createdAt));
+    
+    const result = await Promise.all(
+      requests.map(async (request) => {
+        const quote = await this.getQuoteByRequestId(request.id);
+        const user = await this.getUser(request.userId);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
+        return {
+          ...request,
+          quote,
+          clientName: user?.fullName,
+          deliveryProof
+        };
+      })
+    );
+    
+    return result;
+  }
+  
+  async getCompletedFreightRequests(): Promise<FreightRequestWithQuote[]> {
+    const requests = await db.select()
+      .from(freightRequests)
+      .where(eq(freightRequests.status, "completed"))
       .orderBy(desc(freightRequests.createdAt));
     
     const result = await Promise.all(
@@ -575,7 +594,30 @@ export class MemStorage implements IStorage {
 
   async getActiveFreightRequests(): Promise<FreightRequestWithQuote[]> {
     const requests = Array.from(this.freightRequests.values())
-      .filter(request => ["accepted", "quoted"].includes(request.status));
+      .filter(request => request.status === "accepted");
+    
+    const result = await Promise.all(
+      requests.map(async (request) => {
+        const quote = await this.getQuoteByRequestId(request.id);
+        const user = await this.getUser(request.userId);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
+        return {
+          ...request,
+          quote,
+          clientName: user?.fullName,
+          deliveryProof
+        };
+      })
+    );
+    
+    return result.sort((a, b) => 
+      (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
+    );
+  }
+  
+  async getCompletedFreightRequests(): Promise<FreightRequestWithQuote[]> {
+    const requests = Array.from(this.freightRequests.values())
+      .filter(request => request.status === "completed");
     
     const result = await Promise.all(
       requests.map(async (request) => {
