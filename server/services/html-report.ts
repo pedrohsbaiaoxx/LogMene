@@ -135,7 +135,8 @@ export async function generateClientFreightReport(
       
       const tableTop = doc.y;
       const tableHeaders = ['ID', 'Status', 'Origem', 'Destino', 'Data Envio', 'Data Entrega', 'Dist. (km)', 'Valor (R$)', 'Conclusão'];
-      const colWidths = [25, 55, 60, 60, 55, 55, 55, 55, 75]; // Ajustado para acomodar melhor a distância e conclusão
+      // Reduzir a largura total das colunas para garantir que caibam corretamente na largura da página
+      const colWidths = [25, 50, 50, 50, 50, 50, 50, 50, 50]; 
       const tableWidth = doc.page.width - 100; // Margens esquerda e direita somadas
       
       // Desenhar fundo do cabeçalho
@@ -524,10 +525,12 @@ function addSummaryBoxes(
   totalValue: number,
   totalDistance: number
 ) {
-  const boxWidth = 120;
-  const boxHeight = 60;
-  const boxMargin = 15;
-  const boxStartX = 50;
+  // Usar uma abordagem mais conservadora para os quadros, com menos caixas e mais espaçamento
+  const pageWidth = doc.page.width - 100; // Largura útil da página
+  const boxWidth = 100;                  // Largura reduzida
+  const boxHeight = 70;                  // Altura aumentada
+  const boxMargin = 20;                  // Margem aumentada
+  const boxStartX = 100;                 // Posição inicial centralizada
   const boxStartY = doc.y;
   const boxColor = '#f3f4f6';
   const boxBorder = '#e5e7eb';
@@ -541,9 +544,9 @@ function addSummaryBoxes(
   
   doc.fillColor('#2563eb')
     .font('Helvetica-Bold')
-    .fontSize(24)
-    .text(totalFreights.toString(), boxStartX + boxWidth/2, boxStartY + 15, {
-      width: 0,
+    .fontSize(22)
+    .text(totalFreights.toString(), boxStartX + boxWidth/2, boxStartY + 20, {
+      width: boxWidth,
       align: 'center'
     });
     
@@ -551,7 +554,7 @@ function addSummaryBoxes(
     .font('Helvetica')
     .fontSize(10)
     .text('Total de Fretes', boxStartX + boxWidth/2, boxStartY + boxHeight - 20, {
-      width: 0,
+      width: boxWidth,
       align: 'center'
     });
   
@@ -565,9 +568,9 @@ function addSummaryBoxes(
   
   doc.fillColor('#059669')
     .font('Helvetica-Bold')
-    .fontSize(24)
-    .text(completedFreights.toString(), box2X + boxWidth/2, boxStartY + 15, {
-      width: 0,
+    .fontSize(22)
+    .text(completedFreights.toString(), box2X + boxWidth/2, boxStartY + 20, {
+      width: boxWidth,
       align: 'center'
     });
     
@@ -575,60 +578,37 @@ function addSummaryBoxes(
     .font('Helvetica')
     .fontSize(10)
     .text('Fretes Concluídos', box2X + boxWidth/2, boxStartY + boxHeight - 20, {
-      width: 0,
+      width: boxWidth,
       align: 'center'
     });
   
-  // Quadro 3: Fretes em Andamento
-  const box3X = box2X + boxWidth + boxMargin;
+  // Quadro 3: Valor Total (colocamos apenas dois quadros por linha)
+  const box3X = boxStartX + 50; // Centralizado entre os dois quadros acima
+  const box3Y = boxStartY + boxHeight + boxMargin;
   
   doc.fillColor(boxColor)
     .strokeColor(boxBorder)
-    .rect(box3X, boxStartY, boxWidth, boxHeight)
-    .fillAndStroke();
-  
-  doc.fillColor('#0284c7')
-    .font('Helvetica-Bold')
-    .fontSize(24)
-    .text(inProgressFreights.toString(), box3X + boxWidth/2, boxStartY + 15, {
-      width: 0,
-      align: 'center'
-    });
-    
-  doc.fillColor('#4b5563')
-    .font('Helvetica')
-    .fontSize(10)
-    .text('Em Andamento', box3X + boxWidth/2, boxStartY + boxHeight - 20, {
-      width: 0,
-      align: 'center'
-    });
-  
-  // Quadro 4: Valor Total
-  const box4X = box3X + boxWidth + boxMargin;
-  
-  doc.fillColor(boxColor)
-    .strokeColor(boxBorder)
-    .rect(box4X, boxStartY, boxWidth, boxHeight)
+    .rect(box3X, box3Y, 2*boxWidth, boxHeight) // Quadro maior para o valor
     .fillAndStroke();
   
   doc.fillColor('#9333ea')
     .font('Helvetica-Bold')
     .fontSize(16)
-    .text(`R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, box4X + boxWidth/2, boxStartY + 20, {
-      width: 0,
+    .text(`R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, box3X + boxWidth, box3Y + 25, {
+      width: 2*boxWidth,
       align: 'center'
     });
     
   doc.fillColor('#4b5563')
     .font('Helvetica')
     .fontSize(10)
-    .text('Valor Total', box4X + boxWidth/2, boxStartY + boxHeight - 20, {
-      width: 0,
+    .text('Valor Total', box3X + boxWidth, box3Y + boxHeight - 20, {
+      width: 2*boxWidth,
       align: 'center'
     });
     
   // Atualizar posição do cursor
-  doc.y = boxStartY + boxHeight + 20;
+  doc.y = box3Y + boxHeight + 20;
 }
 
 /**
