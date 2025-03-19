@@ -105,7 +105,7 @@ export default function ClientsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex items-center">
             <UsersIcon className="mr-2 h-5 w-5 text-primary" />
-            <h1 className="text-2xl font-bold">Clientes Cadastrados</h1>
+            <h1 className="text-2xl font-bold text-foreground">Clientes Cadastrados</h1>
           </div>
           
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
