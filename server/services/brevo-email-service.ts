@@ -1,8 +1,8 @@
-import * as SibApiV3Sdk from 'sib-api-v3-sdk';
 import { log } from '../vite';
+import * as SibApiV3Sdk from 'sib-api-v3-sdk';
 
 // Inicialização da API do Brevo/Sendinblue
-let apiInstance: SibApiV3Sdk.TransactionalEmailsApi | null = null;
+let apiInstance: any = null;
 
 // Função para inicializar a API do Brevo
 function initBrevoApi() {

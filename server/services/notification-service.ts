@@ -42,28 +42,35 @@ export async function sendNotification({
 
     // Se solicitado, enviar também por email
     if (shouldSendEmail && user.email) {
-      // Preferimos usar o Brevo se estiver configurado
-      if (process.env.BREVO_API_KEY) {
-        const emailParams = createBrevoNotification(
-          user.email,
-          user.fullName,
-          type,
-          requestId || 0,
-          message
-        );
+      try {
+        // Preferimos usar o Brevo se estiver configurado
+        if (process.env.BREVO_API_KEY) {
+          const emailParams = createBrevoNotification(
+            user.email,
+            user.fullName || user.username,
+            type,
+            requestId || 0,
+            message
+          );
 
-        await sendBrevoEmail(emailParams);
-      } else {
-        // Fallback para o serviço de email original
-        const emailParams = createEmailNotification(
-          user.email,
-          user.fullName,
-          type,
-          requestId || 0,
-          message
-        );
+          await sendBrevoEmail(emailParams);
+          log(`Email enviado via Brevo para ${user.email}`, 'notification-service');
+        } else {
+          // Fallback para o serviço de email original
+          const emailParams = createEmailNotification(
+            user.email,
+            user.fullName || user.username,
+            type,
+            requestId || 0,
+            message
+          );
 
-        await sendEmail(emailParams);
+          await sendEmail(emailParams);
+          log(`Email enviado via serviço padrão para ${user.email}`, 'notification-service');
+        }
+      } catch (error) {
+        log(`Erro ao enviar email de notificação: ${error}`, 'notification-service');
+        // Continuamos a execução mesmo se o email falhar
       }
     }
 
