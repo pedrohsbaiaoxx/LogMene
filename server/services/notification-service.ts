@@ -1,5 +1,6 @@
 import { storage } from '../storage';
-import { createNotificationEmail, sendEmail } from './email-service';
+import { createNotificationEmail as createEmailNotification, sendEmail } from './email-service';
+import { createNotificationEmail as createBrevoNotification, sendEmail as sendBrevoEmail } from './brevo-email-service';
 import { log } from '../vite';
 import { InsertNotification } from '@shared/schema';
 
@@ -41,15 +42,29 @@ export async function sendNotification({
 
     // Se solicitado, enviar também por email
     if (shouldSendEmail && user.email) {
-      const emailParams = createNotificationEmail(
-        user.email,
-        user.fullName,
-        type,
-        requestId || 0,
-        message
-      );
+      // Preferimos usar o Brevo se estiver configurado
+      if (process.env.BREVO_API_KEY) {
+        const emailParams = createBrevoNotification(
+          user.email,
+          user.fullName,
+          type,
+          requestId || 0,
+          message
+        );
 
-      await sendEmail(emailParams);
+        await sendBrevoEmail(emailParams);
+      } else {
+        // Fallback para o serviço de email original
+        const emailParams = createEmailNotification(
+          user.email,
+          user.fullName,
+          type,
+          requestId || 0,
+          message
+        );
+
+        await sendEmail(emailParams);
+      }
     }
 
     return true;

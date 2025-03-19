@@ -15,7 +15,7 @@ import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
-import { sendEmail as sendBrevoEmail } from "./services/brevo-email-service";
+import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
@@ -67,6 +67,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao enviar email de teste:", error);
       res.status(500).json({ success: false, message: `Erro ao enviar email: ${error}` });
+    }
+  });
+
+  // Rota para testar o envio de email usando Brevo
+  app.get("/api/test/brevo-email", async (req, res) => {
+    try {
+      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
+      
+      console.log(`Iniciando teste de email usando Brevo para: ${testEmail}`);
+      
+      const result = await sendBrevoEmail({
+        to: testEmail,
+        from: "LogMene <noreply@logmene.com>",
+        subject: "Teste do Brevo - LogMene",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Sistema de Logística</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um email de teste do sistema LogMene usando o serviço <strong>Brevo</strong>.</p>
+              <p>Se você está recebendo este email, o serviço de email Brevo está funcionando corretamente!</p>
+              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result) {
+        console.log(`Email de teste via Brevo enviado com sucesso para: ${testEmail}`);
+        res.json({ success: true, message: `Email de teste via Brevo enviado com sucesso para ${testEmail}` });
+      } else {
+        console.error(`Falha ao enviar email de teste via Brevo para: ${testEmail}`);
+        res.status(500).json({ success: false, message: "Falha ao enviar email de teste via Brevo" });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email de teste via Brevo:", error);
+      res.status(500).json({ success: false, message: `Erro ao enviar email via Brevo: ${error}` });
     }
   });
 
@@ -164,14 +206,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Notificação in-app
             sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
             
-            // Email para empresa
-            await sendNewFreightRequestEmail(
-              companyUser.email,
-              companyUser.fullName || companyUser.username,
-              freightRequest.id,
-              clientName,
-              freightDetails
-            );
+            // Email para empresa - preferimos usar Brevo se disponível
+            if (process.env.BREVO_API_KEY) {
+              await sendNewFreightRequestBrevoEmail(
+                companyUser.email,
+                companyUser.fullName || companyUser.username,
+                freightRequest.id,
+                clientName,
+                freightDetails
+              );
+            } else {
+              await sendNewFreightRequestEmail(
+                companyUser.email,
+                companyUser.fullName || companyUser.username,
+                freightRequest.id,
+                clientName,
+                freightDetails
+              );
+            }
           }
         }
         
