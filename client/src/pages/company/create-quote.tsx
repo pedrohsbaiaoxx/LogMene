@@ -1,6 +1,6 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, LocateIcon, Map, TruckIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,8 +22,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertQuoteSchema, FreightRequestWithQuote } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 
 // Define the form schema based on the quote schema
 const formSchema = insertQuoteSchema.omit({ 
@@ -36,70 +34,11 @@ export default function CreateQuotePage() {
   const { toast } = useToast();
   
   const requestId = params.requestId ? parseInt(params.requestId) : 0;
-  const [distance, setDistance] = useState<number | null>(null);
-  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   
   // Fetch request details
   const { data: request, isLoading } = useQuery<FreightRequestWithQuote>({
     queryKey: [`/api/requests/${requestId}`],
   });
-
-  // Mutation for distance calculation
-  const calculateDistanceMutation = useMutation({
-    mutationFn: async (addresses: { fromAddress: string, toAddress: string }) => {
-      const res = await apiRequest("POST", "/api/calculate-distance", addresses);
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.success && data.distance) {
-        setDistance(data.distance);
-        
-        // Sugerir valor baseado na distância (R$ 2,50/km + taxa base de R$ 100)
-        const baseRate = 100;
-        const ratePerKm = 2.5;
-        const suggestedValue = baseRate + (data.distance * ratePerKm);
-        
-        // Atualizar o valor no formulário
-        form.setValue("value", parseFloat(suggestedValue.toFixed(2)));
-        
-        // Calcular prazo estimado (1 dia a cada 400km, mínimo 1 dia)
-        const daysPerKm = 400;
-        const estimatedDays = Math.max(1, Math.ceil(data.distance / daysPerKm));
-        form.setValue("estimatedDays", estimatedDays);
-        
-        toast({
-          title: "Distância calculada",
-          description: `A distância entre os endereços é de aproximadamente ${data.distance} km.`,
-        });
-      } else {
-        toast({
-          title: "Erro ao calcular distância",
-          description: data.error || "Não foi possível calcular a distância.",
-          variant: "destructive",
-        });
-      }
-      setIsCalculatingDistance(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Erro no cálculo",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsCalculatingDistance(false);
-    },
-  });
-
-  // Função para calcular a distância
-  const handleCalculateDistance = () => {
-    if (!request) return;
-    
-    setIsCalculatingDistance(true);
-    calculateDistanceMutation.mutate({
-      fromAddress: `${request.originStreet}, ${request.originCity} - ${request.originState}`,
-      toAddress: `${request.destinationStreet}, ${request.destinationCity} - ${request.destinationState}`
-    });
-  };
 
   // Create the form
   const form = useForm<z.infer<typeof formSchema>>({
