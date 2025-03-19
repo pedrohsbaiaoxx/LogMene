@@ -141,6 +141,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const completedRequests = allRequests.filter(request => request.status === "completed");
     res.json(completedRequests);
   });
+  
+  // Rotas adicionais sem o prefixo "client" para compatibilidade
+  
+  // Get pending requests (includes both pending and quoted)
+  app.get("/api/pending-requests", ensureClient, async (req, res) => {
+    const allRequests = await storage.getFreightRequestsByUserId(req.user!.id);
+    const pendingRequests = allRequests.filter(request => 
+      request.status === "pending" || request.status === "quoted"
+    );
+    res.json(pendingRequests);
+  });
+  
+  // Get active requests (in progress)
+  app.get("/api/active-requests", ensureClient, async (req, res) => {
+    const allRequests = await storage.getFreightRequestsByUserId(req.user!.id);
+    const activeRequests = allRequests.filter(request => request.status === "accepted");
+    res.json(activeRequests);
+  });
+  
+  // Get completed requests
+  app.get("/api/completed-requests", ensureClient, async (req, res) => {
+    const allRequests = await storage.getFreightRequestsByUserId(req.user!.id);
+    const completedRequests = allRequests.filter(request => request.status === "completed");
+    res.json(completedRequests);
+  });
 
   // Get freight request details
   app.get("/api/requests/:id", ensureAuthenticated, async (req, res) => {
