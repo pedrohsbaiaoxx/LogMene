@@ -17,8 +17,8 @@ import { fromZodError } from "zod-validation-error";
 import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
 import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
-import { sendNewFreightRequestSMS } from "./services/sms-service";
-import { sendWhatsApp, sendNewFreightRequestWhatsApp } from "./services/whatsapp-service";
+// Serviço de SMS removido conforme solicitação do cliente
+// Serviço de WhatsApp removido conforme solicitação do cliente
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
@@ -188,130 +188,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Rota para testar o envio de SMS
-  app.get("/api/test/sms", async (req, res) => {
-    try {
-      const phone = req.query.phone as string;
-      
-      if (!phone) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "O parâmetro 'phone' é obrigatório" 
-        });
-      }
-      
-      console.log(`Iniciando teste de SMS para o número: ${phone}`);
-      
-      // Enviando uma mensagem SMS de teste
-      const result = await sendNewFreightRequestSMS(
-        phone,
-        "Empresa Teste",
-        12345, // ID fictício da solicitação
-        "Cliente Teste" // Nome fictício do cliente
-      );
-      
-      if (result) {
-        console.log(`SMS de teste enviado com sucesso para: ${phone}`);
-        res.json({ 
-          success: true, 
-          message: `SMS de teste enviado com sucesso para ${phone}` 
-        });
-      } else {
-        console.error(`Falha ao enviar SMS de teste para: ${phone}`);
-        res.status(500).json({ 
-          success: false, 
-          message: "Falha ao enviar SMS de teste" 
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao enviar SMS de teste:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Falha ao enviar SMS de teste",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
+  // Rota de teste de SMS removida conforme solicitação do cliente
   
-  // Rota para testar o envio de WhatsApp
-  app.get("/api/test/whatsapp", async (req, res) => {
-    try {
-      const phone = req.query.phone as string;
-      const type = req.query.type as string || 'new_request';
-      const requestId = Number(req.query.requestId) || 12345;
-      const status = req.query.status as string || 'accepted';
-      
-      if (!phone) {
-        return res.status(400).json({ 
-          success: false, 
-          message: "O parâmetro 'phone' é obrigatório" 
-        });
-      }
-      
-      log(`Iniciando teste de WhatsApp [${type}] para o número: ${phone}`, 'whatsapp-test');
-      
-      // Log das variáveis de ambiente para debug
-      const simulationModeValue = process.env.WHATSAPP_SIMULATION_MODE;
-      log(`Variável de ambiente WHATSAPP_SIMULATION_MODE="${simulationModeValue}" (${typeof simulationModeValue})`, 'whatsapp-test');
-      
-      let result = false;
-      
-      // Escolher qual função chamar com base no tipo
-      if (type === 'delivery_proof') {
-        // Importar a função para enviar notificação de comprovante de entrega
-        const { sendDeliveryProofWhatsApp } = await import('./services/whatsapp-service');
-        result = await sendDeliveryProofWhatsApp(
-          phone,
-          "Usuário Teste",
-          requestId
-        );
-      } 
-      else if (type === 'status_update') {
-        // Importar a função para enviar notificação de atualização de status
-        const { sendStatusUpdateWhatsApp } = await import('./services/whatsapp-service');
-        result = await sendStatusUpdateWhatsApp(
-          phone,
-          "Usuário Teste",
-          requestId,
-          status
-        );
-      }
-      else {
-        // Padrão: nova solicitação
-        result = await sendNewFreightRequestWhatsApp(
-          phone,
-          "Empresa Teste",
-          requestId,
-          "Cliente Teste"
-        );
-      }
-      
-      if (result) {
-        log(`WhatsApp de teste [${type}] enviado com sucesso para: ${phone}`, 'whatsapp-test');
-        res.json({ 
-          success: true, 
-          message: `WhatsApp de teste enviado com sucesso para ${phone}`,
-          simulation_mode: process.env.WHATSAPP_SIMULATION_MODE === "true",
-          phone_formatted: phone.replace(/\D/g, ''),
-          type,
-          requestId
-        });
-      } else {
-        log(`Falha ao enviar WhatsApp de teste [${type}] para: ${phone}`, 'whatsapp-test');
-        res.status(500).json({ 
-          success: false, 
-          message: "Falha ao enviar WhatsApp de teste" 
-        });
-      }
-    } catch (error) {
-      log(`Erro ao enviar WhatsApp de teste: ${error}`, 'whatsapp-test');
-      res.status(500).json({ 
-        success: false, 
-        message: "Erro ao enviar WhatsApp de teste",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
+  // Rota de teste de WhatsApp removida conforme solicitação do cliente
   
   // Rota para testar o email de nova solicitação de frete via Brevo (POST)
   app.post("/api/test/send-freight-request-email", async (req, res) => {
@@ -466,32 +345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Notificação in-app
             sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
             
-            // Enviar WhatsApp para a empresa se tiver número de telefone cadastrado
-            if (companyUser.phone) {
-              log(`Tentando enviar WhatsApp para ${companyUser.fullName} no número ${companyUser.phone}`, 'whatsapp');
-              const whatsappSent = await sendNewFreightRequestWhatsApp(
-                companyUser.phone,
-                companyUser.fullName || companyUser.username,
-                freightRequest.id,
-                clientName
-              );
-              
-              if (whatsappSent) {
-                log(`WhatsApp enviado com sucesso para empresa ${companyUser.id}`, 'whatsapp');
-              } else {
-                log(`Falha ao enviar WhatsApp para empresa ${companyUser.id}, tentando SMS como fallback`, 'whatsapp');
-                
-                // Fallback para SMS caso o WhatsApp falhe
-                await sendNewFreightRequestSMS(
-                  companyUser.phone,
-                  companyUser.fullName || companyUser.username,
-                  freightRequest.id,
-                  clientName
-                );
-              }
-            } else {
-              log(`Empresa ${companyUser.username} não tem número de telefone cadastrado. Não foi possível enviar WhatsApp.`, 'whatsapp');
-            }
+            // Funcionalidade de notificação por WhatsApp e SMS removida conforme solicitação do cliente
+            // Apenas notificações por email e in-app estão sendo usadas
           }
         }
         
