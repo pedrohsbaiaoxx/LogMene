@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { AddressInput } from "@/components/address-input";
@@ -32,6 +34,8 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertFreightRequestSchema } from "@shared/schema";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 // Define the form schema based on the freight request schema
 const formSchema = insertFreightRequestSchema.omit({ 
@@ -51,9 +55,20 @@ export default function NewRequestPage() {
     { value: "fractional", label: "Carga Fracionada" },
   ];
 
+  // Estender e validar o schema para datas
+  const extendedFormSchema = formSchema.extend({
+    pickupDate: z.string().nonempty({ message: "Data de retirada é obrigatória" }),
+    deliveryDate: z.string().nonempty({ message: "Data de entrega é obrigatória" }),
+    cargoType: z.string().nonempty({ message: "Tipo de carga é obrigatório" }),
+    originCity: z.string().nonempty({ message: "Cidade de origem é obrigatória" }),
+    originState: z.string().nonempty({ message: "Estado de origem é obrigatório" }),
+    destinationCity: z.string().nonempty({ message: "Cidade de destino é obrigatória" }),
+    destinationState: z.string().nonempty({ message: "Estado de destino é obrigatório" }),
+  });
+
   // Create the form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof extendedFormSchema>>({
+    resolver: zodResolver(extendedFormSchema),
     defaultValues: {
       originStreet: "",
       originCity: "",
@@ -62,8 +77,8 @@ export default function NewRequestPage() {
       destinationCity: "",
       destinationState: "",
       cargoType: "",
-      weight: undefined, // Mudado de 0 para undefined para evitar valores iniciais
-      volume: undefined, // Mudado de 0 para undefined para evitar valores iniciais
+      weight: undefined, 
+      volume: undefined, 
       pickupDate: "",
       deliveryDate: "",
       notes: "",
@@ -73,9 +88,20 @@ export default function NewRequestPage() {
 
   // Create request mutation
   const createRequestMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
-      const res = await apiRequest("POST", "/api/requests", data);
-      return res.json();
+    mutationFn: async (data: z.infer<typeof extendedFormSchema>) => {
+      try {
+        const res = await apiRequest("POST", "/api/requests", data);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Erro ao criar solicitação");
+        }
+        return res.json();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error("Erro ao criar solicitação");
+      }
     },
     onSuccess: () => {
       toast({
@@ -86,22 +112,26 @@ export default function NewRequestPage() {
       navigate("/");
     },
     onError: (error: Error) => {
+      console.error("Erro na criação da solicitação:", error);
       toast({
         title: "Erro ao criar solicitação",
-        description: error.message,
+        description: error.message || "Não foi possível criar a solicitação. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     },
   });
 
   // Submit handler
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof extendedFormSchema>) {
+    console.log("Enviando valores:", values);
+    
     // Convertendo undefined para 0 antes de enviar para o backend
     const formattedValues = {
       ...values,
       weight: values.weight === undefined ? 0 : values.weight,
       volume: values.volume === undefined ? 0 : values.volume
     };
+    
     createRequestMutation.mutate(formattedValues);
   }
 
@@ -231,11 +261,36 @@ export default function NewRequestPage() {
                     control={form.control}
                     name="pickupDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Data de Retirada</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                              >
+                                {field.value ? (
+                                  format(new Date(field.value), "dd/MM/yyyy", { locale: ptBR })
+                                ) : (
+                                  <span>Selecione uma data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ? new Date(field.value) : undefined}
+                              onSelect={(date) => {
+                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                              }}
+                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -244,11 +299,43 @@ export default function NewRequestPage() {
                     control={form.control}
                     name="deliveryDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Data de Entrega Desejada</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                              >
+                                {field.value ? (
+                                  format(new Date(field.value), "dd/MM/yyyy", { locale: ptBR })
+                                ) : (
+                                  <span>Selecione uma data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ? new Date(field.value) : undefined}
+                              onSelect={(date) => {
+                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                              }}
+                              disabled={(date) => {
+                                // Desabilitar datas anteriores à data de retirada ou à data atual
+                                const today = new Date(new Date().setHours(0, 0, 0, 0));
+                                const pickupDate = form.getValues("pickupDate") 
+                                  ? new Date(form.getValues("pickupDate")) 
+                                  : today;
+                                return date < (pickupDate > today ? pickupDate : today);
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
