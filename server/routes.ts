@@ -839,9 +839,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Iniciando teste de envio de email para pedroxxsb@gmail.com");
       
+      // Verificar se as credenciais de email estão configuradas
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Configuração de email incompleta: EMAIL_USER ou EMAIL_PASSWORD não definido'
+        });
+      }
+      
+      const from = process.env.EMAIL_USER;
+      const to = 'pedroxxsb@gmail.com';
+      
+      console.log(`Tentando enviar email de ${from} para ${to}`);
+      
       const result = await sendEmail({
-        to: 'pedroxxsb@gmail.com',
-        from: 'noreply@logmene.com',
+        to: to,
+        from: from, // Usando a conta de email configurada
         subject: 'Teste de Email do LogMene',
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">

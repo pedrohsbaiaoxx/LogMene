@@ -2,12 +2,18 @@ import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
 // Configuração do transportador de email usando Gmail
+// Nota: Para Gmail, você deve usar uma "senha de aplicativo" nas configurações de segurança da conta
+// e não a senha normal da sua conta
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true para porta 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
-  }
+  },
+  logger: true, // Ativa logs para depuração
+  debug: true // Inclui logs de SMTP para depuração
 });
 
 interface EmailParams {
@@ -30,6 +36,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     // Atualizamos o remetente para usar o email configurado
     const from = process.env.EMAIL_USER;
     
+    log(`Tentando enviar email de ${from} para ${params.to}. Credenciais configuradas: Sim`, 'email-service');
+    
     // Enviando email usando nodemailer
     const info = await transporter.sendMail({
       from: from,
@@ -39,10 +47,27 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       html: params.html || '',
     });
     
-    log(`Email enviado para ${params.to}. ID da mensagem: ${info.messageId}`, 'email-service');
+    log(`Email enviado com sucesso para ${params.to}. ID da mensagem: ${info.messageId}`, 'email-service');
     return true;
   } catch (error) {
     console.error('Nodemailer error:', error);
+    
+    // Log detalhado do erro para melhor depuração
+    if (error instanceof Error) {
+      log(`Erro ao enviar email: ${error.message}`, 'email-service');
+      if ('code' in error) {
+        log(`Código de erro: ${(error as any).code}`, 'email-service');
+      }
+      if ('command' in error) {
+        log(`Comando que falhou: ${(error as any).command}`, 'email-service');
+      }
+      if ('response' in error) {
+        log(`Resposta do servidor: ${(error as any).response}`, 'email-service');
+      }
+    } else {
+      log(`Erro ao enviar email (tipo não identificado): ${String(error)}`, 'email-service');
+    }
+    
     return false;
   }
 }
@@ -89,7 +114,8 @@ export function createNotificationEmail(
   requestId: number,
   message: string
 ): EmailParams {
-  const from = 'noreply@logmene.com';
+  // Usar email configurado nas variáveis de ambiente ou fallback para noreply@logmene.com
+  const from = process.env.EMAIL_USER || 'noreply@logmene.com';
   const templates: Record<string, { subject: string, intro: string }> = {
     'status_update': {
       subject: 'Atualização de Status - LogMene',
