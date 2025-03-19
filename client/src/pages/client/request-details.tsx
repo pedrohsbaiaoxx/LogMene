@@ -229,12 +229,12 @@ export default function RequestDetailsPage() {
                   <p className="text-sm text-neutral-500">Entrega Desejada</p>
                   <p className="font-medium text-neutral-700">{formatISODateToDisplay(request.deliveryDate)}</p>
                 </div>
-                {request.completedAt && (
                 <div>
                   <p className="text-sm text-neutral-500">Concluído em</p>
-                  <p className="font-medium text-neutral-700">{formatISODateToDisplay(request.completedAt.toString())}</p>
+                  <p className="font-medium text-neutral-700">
+                    {request.completedAt ? formatISODateToDisplay(request.completedAt.toString()) : '-'}
+                  </p>
                 </div>
-                )}
               </div>
             </div>
             
@@ -254,7 +254,7 @@ export default function RequestDetailsPage() {
                   <div>
                     <p className="text-sm text-neutral-500">Cotado em</p>
                     <p className="font-medium text-neutral-700">
-                      {request.quote.createdAt && new Date(request.quote.createdAt).toLocaleDateString('pt-BR')}
+                      {request.quote.createdAt && formatISODateToDisplay(request.quote.createdAt.toString())}
                     </p>
                   </div>
                 </div>
