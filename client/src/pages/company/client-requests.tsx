@@ -101,7 +101,7 @@ export default function ClientRequestsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-50">
+    <div className="flex flex-col min-h-screen bg-background">
       <Header title="Solicitações do Cliente" />
       
       <main className="flex-1 container mx-auto p-4">
@@ -119,14 +119,14 @@ export default function ClientRequestsPage() {
           </h1>
         </div>
         
-        <Card className="mb-6 bg-slate-800 border-slate-700">
+        <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row justify-between mb-4">
               <div>
-                <p className="text-sm text-slate-400">Dados do Cliente</p>
-                <p className="font-medium text-slate-200">{client.fullName}</p>
-                <p className="text-sm text-slate-300">{client.email}</p>
-                <p className="text-sm text-slate-300">{client.phone}</p>
+                <p className="text-sm text-muted-foreground">Dados do Cliente</p>
+                <p className="font-medium">{client.fullName}</p>
+                <p className="text-sm">{client.email}</p>
+                <p className="text-sm">{client.phone}</p>
               </div>
               {!isMobile && (
                 <div className="mt-4 md:mt-0">
@@ -156,13 +156,13 @@ export default function ClientRequestsPage() {
             {filteredRequests && filteredRequests.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
                 {filteredRequests.map((request) => (
-                  <Card key={request.id} className="overflow-hidden bg-slate-800 border-slate-700">
+                  <Card key={request.id} className="overflow-hidden">
                     <CardContent className="p-0">
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
                             <Package className="h-5 w-5 text-primary" />
-                            <p className="font-medium text-slate-200">
+                            <p className="font-medium">
                               Solicitação #{request.id}
                             </p>
                           </div>
@@ -171,15 +171,15 @@ export default function ClientRequestsPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 gap-x-4 mb-3">
                           <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4 text-slate-400" />
-                            <span className="text-sm text-slate-300">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
                               {formatDate(new Date(request.createdAt || ""))}
                             </span>
                           </div>
                           
                           <div className="md:col-span-2 flex items-center gap-1">
-                            <Map className="h-4 w-4 text-slate-400" />
-                            <span className="text-sm truncate text-slate-300">
+                            <Map className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm truncate">
                               {request.originCity} → {request.destinationCity}
                             </span>
                           </div>
@@ -187,8 +187,8 @@ export default function ClientRequestsPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 gap-x-4 mb-3">
                           <div>
-                            <p className="text-sm text-slate-400">Tipo</p>
-                            <p className="font-medium text-slate-200">
+                            <p className="text-sm text-muted-foreground">Tipo</p>
+                            <p className="font-medium">
                               {request.cargoType === "general" && "Carga Geral"}
                               {request.cargoType === "fragile" && "Frágil"}
                               {request.cargoType === "perishable" && "Perecível"}
@@ -198,28 +198,28 @@ export default function ClientRequestsPage() {
                           </div>
                           
                           <div>
-                            <p className="text-sm text-slate-400">Peso</p>
-                            <p className="font-medium text-slate-200">{request.weight} kg</p>
+                            <p className="text-sm text-muted-foreground">Peso</p>
+                            <p className="font-medium">{request.weight} kg</p>
                           </div>
                           
                           <div>
-                            <p className="text-sm text-slate-400">Volume</p>
-                            <p className="font-medium text-slate-200">{request.volume} m³</p>
+                            <p className="text-sm text-muted-foreground">Volume</p>
+                            <p className="font-medium">{request.volume} m³</p>
                           </div>
                         </div>
                         
                         {request.quote && (
-                          <div className="mt-3 p-3 bg-slate-700 rounded-md">
-                            <p className="text-sm text-slate-100 font-medium mb-1">
+                          <div className="mt-3 p-3 bg-primary/10 rounded-md">
+                            <p className="text-sm font-medium mb-1 text-primary-foreground">
                               Cotação: R$ {request.quote.value.toFixed(2)}
                             </p>
-                            <p className="text-xs text-slate-300">
+                            <p className="text-xs text-muted-foreground">
                               Prazo: {request.quote.estimatedDays} dias
                             </p>
                           </div>
                         )}
                         
-                        <Separator className="my-3 bg-slate-700" />
+                        <Separator className="my-3" />
                         
                         <div className="flex justify-end">
                           <Link href={`/company/requests/${request.id}`}>
@@ -234,10 +234,10 @@ export default function ClientRequestsPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardContent className="py-6">
                   <div className="text-center py-8">
-                    <p className="text-slate-400 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       {activeTab === "all"
                         ? "Este cliente ainda não possui solicitações de frete."
                         : "Não há solicitações de frete nesta categoria."}

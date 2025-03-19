@@ -128,17 +128,17 @@ export default function CompanyHomePage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-50">
+    <div className="flex flex-col min-h-screen bg-background">
       <Header title="LogMene" />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-100">Painel da Transportadora</h2>
+          <h2 className="text-2xl font-bold">Painel da Transportadora</h2>
           
           <div className="mt-3 md:mt-0">
             <Button 
               onClick={() => navigate("/company/clients")} 
-              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100"
+              className="flex items-center gap-2"
               variant="default"
             >
               <Users className="h-4 w-4" />
@@ -151,54 +151,54 @@ export default function CompanyHomePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {isPendingLoading || isActiveLoading ? (
             <>
-              <Skeleton className="h-32 bg-slate-800/50" />
-              <Skeleton className="h-32 bg-slate-800/50" />
-              <Skeleton className="h-32 bg-slate-800/50" />
-              <Skeleton className="h-32 bg-slate-800/50" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
             </>
           ) : (
             <>
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-slate-200">Novas Solicitações</h3>
+                    <h3 className="font-medium text-neutral-700">Novas Solicitações</h3>
                     <AlertCircle className="h-5 w-5 text-[#2196F3]" />
                   </div>
                   <p className="text-3xl font-bold text-[#2196F3]">{stats.newRequests}</p>
-                  <p className="text-sm text-slate-400">Aguardando cotação</p>
+                  <p className="text-sm text-neutral-500">Aguardando cotação</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-slate-200">Cotadas</h3>
+                    <h3 className="font-medium text-neutral-700">Cotadas</h3>
                     <PieChart className="h-5 w-5 text-[#FF9800]" />
                   </div>
                   <p className="text-3xl font-bold text-[#FF9800]">{stats.quoted}</p>
-                  <p className="text-sm text-slate-400">Aguardando resposta</p>
+                  <p className="text-sm text-neutral-500">Aguardando resposta</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-slate-200">Em Andamento</h3>
+                    <h3 className="font-medium text-neutral-700">Em Andamento</h3>
                     <TruckIcon className="h-5 w-5 text-primary" />
                   </div>
                   <p className="text-3xl font-bold text-primary">{stats.inProgress}</p>
-                  <p className="text-sm text-slate-400">Fretes ativos</p>
+                  <p className="text-sm text-neutral-500">Fretes ativos</p>
                 </CardContent>
               </Card>
               
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-slate-200">Concluídas</h3>
+                    <h3 className="font-medium text-neutral-700">Concluídas</h3>
                     <CheckCircle className="h-5 w-5 text-[#4CAF50]" />
                   </div>
                   <p className="text-3xl font-bold text-[#4CAF50]">{stats.completed}</p>
-                  <p className="text-sm text-slate-400">No último mês</p>
+                  <p className="text-sm text-neutral-500">No último mês</p>
                 </CardContent>
               </Card>
             </>
@@ -206,42 +206,40 @@ export default function CompanyHomePage() {
         </div>
         
         {/* New Requests Section */}
-        <Card className="mb-6 bg-slate-800 border-slate-700">
+        <Card className="mb-6">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-slate-200">Novas Solicitações</CardTitle>
+            <CardTitle className="text-lg font-medium text-neutral-700">Novas Solicitações</CardTitle>
           </CardHeader>
           
           {isPendingLoading ? (
             <CardContent>
-              <Skeleton className="h-64 w-full bg-slate-700/50" />
+              <Skeleton className="h-64 w-full" />
             </CardContent>
           ) : (
             <CardContent className="p-0">
               <DataTable 
                 columns={pendingRequestsColumns}
                 data={pendingRequests || []}
-                className="text-slate-200"
               />
             </CardContent>
           )}
         </Card>
         
         {/* In Progress Section */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-slate-200">Fretes em Andamento</CardTitle>
+            <CardTitle className="text-lg font-medium text-neutral-700">Fretes em Andamento</CardTitle>
           </CardHeader>
           
           {isActiveLoading ? (
             <CardContent>
-              <Skeleton className="h-64 w-full bg-slate-700/50" />
+              <Skeleton className="h-64 w-full" />
             </CardContent>
           ) : (
             <CardContent className="p-0">
               <DataTable 
                 columns={activeRequestsColumns}
                 data={activeRequests || []}
-                className="text-slate-200"
               />
             </CardContent>
           )}
