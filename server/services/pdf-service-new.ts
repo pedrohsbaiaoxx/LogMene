@@ -1,11 +1,22 @@
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import PdfPrinter from 'pdfmake';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { FreightRequestWithQuote } from '@shared/schema';
 import { formatISODateToDisplay } from '../../client/src/lib/utils';
+import fs from 'fs';
+import path from 'path';
 
-// Configuração das fontes do pdfMake
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// Definição das fontes
+const fonts = {
+  Roboto: {
+    normal: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italics: 'Helvetica-Oblique',
+    bolditalics: 'Helvetica-BoldOblique'
+  }
+};
+
+// Criar instância do PDFPrinter
+const printer = new PdfPrinter(fonts);
 
 /**
  * Gera um relatório de fretes para um cliente específico
@@ -104,17 +115,21 @@ export async function generateClientFreightReport(
       }
     },
     defaultStyle: {
-      font: 'Helvetica'
+      font: 'Roboto'
     }
   };
   
-  // Gerar o PDF como buffer
-  const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+  // Criar o documento PDF
+  const pdfDoc = printer.createPdfKitDocument(docDefinition);
   
-  return new Promise<Buffer>((resolve) => {
-    pdfDocGenerator.getBuffer((buffer: Buffer) => {
-      resolve(buffer);
-    });
+  // Buffer para armazenar o PDF
+  const chunks: Buffer[] = [];
+  
+  return new Promise<Buffer>((resolve, reject) => {
+    pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+    pdfDoc.on('error', reject);
+    pdfDoc.end();
   });
 }
 
