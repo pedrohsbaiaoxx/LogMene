@@ -48,6 +48,7 @@ export default function NewRequestPage() {
     { value: "fragile", label: "Frágil" },
     { value: "perishable", label: "Perecível" },
     { value: "dangerous", label: "Perigosa" },
+    { value: "fractional", label: "Carga Fracionada" },
   ];
 
   // Create the form

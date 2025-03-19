@@ -202,6 +202,7 @@ export default function RequestDetailsPage() {
                     {request.cargoType === "fragile" && "Frágil"}
                     {request.cargoType === "perishable" && "Perecível"}
                     {request.cargoType === "dangerous" && "Perigosa"}
+                    {request.cargoType === "fractional" && "Carga Fracionada"}
                   </p>
                 </div>
                 <div>
