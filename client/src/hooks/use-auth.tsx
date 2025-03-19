@@ -38,9 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      const welcomeMessage = user.role === "company" 
+        ? "Bem-vindo(a) de volta, LogMene!" 
+        : `Bem-vindo(a) de volta, ${user.fullName}!`;
       toast({
         title: "Login realizado com sucesso",
-        description: `Bem-vindo(a) de volta, ${user.fullName}!`,
+        description: welcomeMessage,
       });
     },
     onError: (error: Error) => {
@@ -59,9 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      const welcomeMessage = user.role === "company" 
+        ? "Bem-vindo(a), LogMene!" 
+        : `Bem-vindo(a), ${user.fullName}!`;
       toast({
         title: "Cadastro realizado com sucesso",
-        description: `Bem-vindo(a), ${user.fullName}!`,
+        description: welcomeMessage,
       });
     },
     onError: (error: Error) => {
