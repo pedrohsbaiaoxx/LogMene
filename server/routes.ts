@@ -18,6 +18,7 @@ import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
 import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
 import { sendNewFreightRequestSMS } from "./services/sms-service";
+import { sendWhatsApp, sendNewFreightRequestWhatsApp } from "./services/whatsapp-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
@@ -232,6 +233,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para testar o envio de WhatsApp
+  app.get("/api/test/whatsapp", async (req, res) => {
+    try {
+      const phone = req.query.phone as string;
+      
+      if (!phone) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "O parâmetro 'phone' é obrigatório" 
+        });
+      }
+      
+      log(`Iniciando teste de WhatsApp para o número: ${phone}`, 'whatsapp-test');
+      
+      // Enviando uma mensagem WhatsApp de teste
+      const result = await sendNewFreightRequestWhatsApp(
+        phone,
+        "Empresa Teste",
+        12345, // ID fictício da solicitação
+        "Cliente Teste" // Nome fictício do cliente
+      );
+      
+      if (result) {
+        log(`WhatsApp de teste enviado com sucesso para: ${phone}`, 'whatsapp-test');
+        res.json({ 
+          success: true, 
+          message: `WhatsApp de teste enviado com sucesso para ${phone}` 
+        });
+      } else {
+        log(`Falha ao enviar WhatsApp de teste para: ${phone}`, 'whatsapp-test');
+        res.status(500).json({ 
+          success: false, 
+          message: "Falha ao enviar WhatsApp de teste" 
+        });
+      }
+    } catch (error) {
+      log(`Erro ao enviar WhatsApp de teste: ${error}`, 'whatsapp-test');
+      res.status(500).json({ 
+        success: false, 
+        message: "Falha ao enviar WhatsApp de teste",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Rota para testar o email de nova solicitação de frete via Brevo (POST)
   app.post("/api/test/send-freight-request-email", async (req, res) => {
     try {
@@ -378,21 +424,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </ul>
           `;
           
-          // Notificar cada empresa via notificação in-app e SMS
+          // Notificar cada empresa via notificação in-app, e-mail e WhatsApp
           for (const companyUser of companyUsers) {
+            log(`Notificando empresa: ${companyUser.id} - ${companyUser.fullName}`, 'freight-notification');
+            
             // Notificação in-app
             sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
             
-            // Enviar SMS para a empresa se tiver número de telefone cadastrado
+            // Enviar WhatsApp para a empresa se tiver número de telefone cadastrado
             if (companyUser.phone) {
-              await sendNewFreightRequestSMS(
+              log(`Tentando enviar WhatsApp para ${companyUser.fullName} no número ${companyUser.phone}`, 'whatsapp');
+              const whatsappSent = await sendNewFreightRequestWhatsApp(
                 companyUser.phone,
                 companyUser.fullName || companyUser.username,
                 freightRequest.id,
                 clientName
               );
+              
+              if (whatsappSent) {
+                log(`WhatsApp enviado com sucesso para empresa ${companyUser.id}`, 'whatsapp');
+              } else {
+                log(`Falha ao enviar WhatsApp para empresa ${companyUser.id}, tentando SMS como fallback`, 'whatsapp');
+                
+                // Fallback para SMS caso o WhatsApp falhe
+                await sendNewFreightRequestSMS(
+                  companyUser.phone,
+                  companyUser.fullName || companyUser.username,
+                  freightRequest.id,
+                  clientName
+                );
+              }
             } else {
-              console.log(`Empresa ${companyUser.username} não tem número de telefone cadastrado. Não foi possível enviar SMS.`);
+              log(`Empresa ${companyUser.username} não tem número de telefone cadastrado. Não foi possível enviar WhatsApp.`, 'whatsapp');
             }
           }
         }
