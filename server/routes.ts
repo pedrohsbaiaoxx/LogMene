@@ -323,29 +323,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a client account (company only)
   app.post("/api/company/clients", ensureCompany, async (req, res, next) => {
     try {
+      console.log("Criando cliente com dados:", { ...req.body, password: '***' });
+      
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // Force the role to be client
-      const userData = insertUserSchema.parse({
-        ...req.body,
-        role: "client" // Garantir que a role seja sempre "client"
-      });
-      
-      // Hash the password using the auth helper
-      const { hashPassword } = require("./auth");
-      const user = await storage.createUser({
-        ...userData,
-        password: await hashPassword(userData.password),
-      });
+      try {
+        // Force the role to be client
+        const userData = insertUserSchema.parse({
+          ...req.body,
+          role: "client" // Garantir que a role seja sempre "client"
+        });
+        
+        console.log("Dados validados:", { ...userData, password: '***' });
+        
+        try {
+          // Hash the password using the auth helper
+          const { hashPassword } = require("./auth");
+          
+          try {
+            const hashedPassword = await hashPassword(userData.password);
+            console.log("Senha hash gerada com sucesso");
+            
+            try {
+              const user = await storage.createUser({
+                ...userData,
+                password: hashedPassword,
+              });
+              
+              console.log("Usuário criado com sucesso:", { id: user.id, username: user.username });
 
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
-      res.status(201).json(userWithoutPassword);
+              // Remove password from response
+              const { password, ...userWithoutPassword } = user;
+              res.status(201).json(userWithoutPassword);
+            } catch (createUserError) {
+              console.error("Erro ao criar usuário no storage:", createUserError);
+              res.status(500).json({ message: `Erro ao criar usuário: ${createUserError.message}` });
+            }
+          } catch (hashError) {
+            console.error("Erro ao fazer hash da senha:", hashError);
+            res.status(500).json({ message: `Erro ao processar senha: ${hashError.message}` });
+          }
+        } catch (importError) {
+          console.error("Erro ao importar hashPassword:", importError);
+          res.status(500).json({ message: `Erro interno: ${importError.message}` });
+        }
+      } catch (zodError) {
+        console.error("Erro de validação:", zodError);
+        handleZodError(zodError, res);
+      }
     } catch (error) {
-      handleZodError(error, res);
+      console.error("Erro geral na criação do cliente:", error);
+      res.status(500).json({ message: `Erro interno do servidor: ${error.message}` });
     }
   });
   
