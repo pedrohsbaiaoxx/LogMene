@@ -72,6 +72,7 @@ export const quotes = pgTable("quotes", {
   requestId: integer("request_id").notNull(),
   value: real("value").notNull(),
   estimatedDays: integer("estimated_days").notNull(),
+  distanceKm: real("distance_km"), // Nova coluna para distância em KM
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -80,6 +81,7 @@ export const insertQuoteSchema = createInsertSchema(quotes).pick({
   requestId: true,
   value: true,
   estimatedDays: true,
+  distanceKm: true, // Adicionando o campo à schema de inserção
   notes: true,
 });
 
