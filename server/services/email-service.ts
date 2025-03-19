@@ -1,8 +1,8 @@
 import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
-// Configuração do transportador de email usando Gmail
-function createTransporter() {
+// Configuração dos transportadores de email - várias estratégias
+function createGmailTransporter() {
   // Verificar se o email e senha estão configurados
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
     log('EMAIL_USER ou EMAIL_PASSWORD não configurados', 'email-service');
@@ -10,7 +10,7 @@ function createTransporter() {
   }
 
   // Criar transportador com configurações para Gmail
-  log(`Configurando transportador para ${process.env.EMAIL_USER}`, 'email-service');
+  log(`Configurando transportador Gmail para ${process.env.EMAIL_USER}`, 'email-service');
   return nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
@@ -28,8 +28,29 @@ function createTransporter() {
   });
 }
 
-// Criar transportador sob demanda
-const transporter = createTransporter();
+// Cria um transportador de teste que apenas loga as mensagens, útil para desenvolvimento
+function createTestTransporter() {
+  log('Criando transportador de teste para simular envio de emails', 'email-service');
+  return {
+    sendMail: (mailOptions: any) => {
+      return new Promise((resolve) => {
+        log(`[EMAIL SIMULADO] Para: ${mailOptions.to}, Assunto: ${mailOptions.subject}`, 'email-service');
+        log(`[EMAIL SIMULADO] Conteúdo: ${mailOptions.text || mailOptions.html?.substring(0, 150)}...`, 'email-service');
+        
+        // Simular um delay para parecer mais realista
+        setTimeout(() => {
+          resolve({ 
+            messageId: `simulated-${Date.now()}@logmene.local`,
+            response: 'Envio simulado com sucesso'
+          });
+        }, 500);
+      });
+    }
+  };
+}
+
+// Estratégia de fallback: primeiro tenta Gmail, se falhar ou não estiver configurado, usa simulação
+let transporter = createGmailTransporter() || createTestTransporter();
 
 interface EmailParams {
   to: string;

@@ -15,6 +15,7 @@ import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
+import { sendEmail as sendBrevoEmail } from "./services/brevo-email-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
