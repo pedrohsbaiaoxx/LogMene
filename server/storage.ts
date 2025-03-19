@@ -9,7 +9,7 @@ import {
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { db } from "./db";
-import { eq, desc, and, isNull } from "drizzle-orm";
+import { eq, desc, and, isNull, or } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
@@ -155,7 +155,10 @@ export class DatabaseStorage implements IStorage {
     const requests = await db.select()
       .from(freightRequests)
       .where(
-        eq(freightRequests.status, "quoted")
+        or(
+          eq(freightRequests.status, "quoted"),
+          eq(freightRequests.status, "accepted")
+        )
       )
       .orderBy(desc(freightRequests.createdAt));
     
@@ -163,10 +166,12 @@ export class DatabaseStorage implements IStorage {
       requests.map(async (request) => {
         const quote = await this.getQuoteByRequestId(request.id);
         const user = await this.getUser(request.userId);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
         return {
           ...request,
           quote,
-          clientName: user?.fullName
+          clientName: user?.fullName,
+          deliveryProof
         };
       })
     );
@@ -533,10 +538,12 @@ export class MemStorage implements IStorage {
       requests.map(async (request) => {
         const quote = await this.getQuoteByRequestId(request.id);
         const user = await this.getUser(request.userId);
+        const deliveryProof = await this.getDeliveryProofByRequestId(request.id);
         return {
           ...request,
           quote,
-          clientName: user?.fullName
+          clientName: user?.fullName,
+          deliveryProof
         };
       })
     );
