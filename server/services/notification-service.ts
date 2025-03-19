@@ -1,6 +1,5 @@
 import { storage } from '../storage';
-import { createNotificationEmail as createEmailNotification, sendEmail } from './email-service';
-import { createNotificationEmail as createBrevoNotification, sendEmail as sendBrevoEmail } from './brevo-email-service';
+import { createNotificationEmail, sendEmail } from './mailersend-service';
 import { log } from '../vite';
 import { InsertNotification } from '@shared/schema';
 
@@ -43,51 +42,29 @@ export async function sendNotification({
     // Se solicitado, enviar também por email
     if (shouldSendEmail && user.email) {
       try {
-        // Preferimos usar o Brevo se estiver configurado
-        if (process.env.BREVO_API_KEY) {
-          const emailParams = createBrevoNotification(
-            user.email,
-            user.fullName || user.username,
-            type,
-            requestId || 0,
-            message
-          );
+        if (!process.env.MAILERSEND_API_KEY) {
+          throw new Error('MAILERSEND_API_KEY não configurada');
+        }
 
-          try {
-            // Tentamos com Brevo primeiro
-            const result = await sendBrevoEmail(emailParams);
-            if (result) {
-              log(`Email enviado via Brevo para ${user.email}`, 'notification-service');
-            } else {
-              throw new Error('Falha no envio com Brevo');
-            }
-          } catch (brewoError) {
-            log(`Falha no envio com Brevo, tentando serviço padrão: ${brewoError}`, 'notification-service');
-            
-            // Fallback para o serviço de email original
-            const fallbackParams = createEmailNotification(
-              user.email,
-              user.fullName || user.username,
-              type,
-              requestId || 0,
-              message
-            );
-            
-            await sendEmail(fallbackParams);
-            log(`Email enviado via serviço padrão para ${user.email} (fallback)`, 'notification-service');
+        const emailParams = createNotificationEmail(
+          type,
+          user.fullName || user.username,
+          requestId || 0,
+          {
+            status: type === 'status_update' ? message : undefined,
+            value: type === 'quote_received' ? parseFloat(message.match(/R\$ ([\d,.]+)/)?.[1]?.replace('.', '').replace(',', '.') || '0') : undefined
           }
-        } else {
-          // Se não tiver Brevo configurado, usa serviço padrão
-          const emailParams = createEmailNotification(
-            user.email,
-            user.fullName || user.username,
-            type,
-            requestId || 0,
-            message
-          );
+        );
 
-          await sendEmail(emailParams);
-          log(`Email enviado via serviço padrão para ${user.email}`, 'notification-service');
+        const result = await sendEmail({
+          ...emailParams,
+          to: user.email,
+        });
+
+        if (result) {
+          log(`Email enviado via MailerSend para ${user.email}`, 'notification-service');
+        } else {
+          throw new Error('Falha no envio com MailerSend');
         }
       } catch (error) {
         log(`Erro ao enviar email de notificação: ${error}`, 'notification-service');

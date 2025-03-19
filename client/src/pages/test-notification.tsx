@@ -77,7 +77,7 @@ export default function TestNotificationPage() {
     setResult(null);
     
     try {
-      const response = await fetch(`/api/test/brevo-email?email=${encodeURIComponent(emailForm.email)}`);
+      const response = await fetch(`/api/test/send-email?email=${encodeURIComponent(emailForm.email)}`);
       const data = await response.json();
       setResult(data);
       
@@ -257,7 +257,7 @@ export default function TestNotificationPage() {
               onClick={handleEmailSubmit} 
               disabled={loading}
             >
-              {loading ? "Enviando..." : "Enviar Email via Brevo"}
+              {loading ? "Enviando..." : "Enviar Email via MailerSend"}
             </Button>
             
             <Button 

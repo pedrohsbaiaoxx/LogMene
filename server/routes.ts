@@ -15,8 +15,7 @@ import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { log } from "./vite";
-import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
-import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
+import { sendEmail, sendNewFreightRequestEmail } from "./services/mailersend-service";
 // Serviço de SMS removido conforme solicitação do cliente
 // Serviço de WhatsApp removido conforme solicitação do cliente
 import { 
@@ -30,25 +29,21 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
-  
-  // Rota temporária para testar email (remover após teste)
-  app.get("/api/test/email", async (req, res) => {
+
+  // Rota para testar o envio de email usando MailerSend
+  app.get("/api/test/send-email", async (req, res) => {
     try {
       const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
       
-      console.log(`Iniciando teste de email para: ${testEmail}`);
+      console.log(`Iniciando teste de email usando MailerSend para: ${testEmail}`);
       
-      const result = await sendEmail({
-        to: testEmail,
-        from: "LogMene <noreply@logmene.com>",
-        subject: "Teste do Serviço de Email - LogMene",
-        html: `
+      const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
               <h2>LogMene - Sistema de Logística</h2>
             </div>
             <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
-              <p>Este é um email de teste do sistema LogMene.</p>
+              <p>Este é um email de teste do sistema LogMene usando o serviço <strong>MailerSend</strong>.</p>
               <p>Se você está recebendo este email, o serviço de email está funcionando corretamente!</p>
               <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
             </div>
@@ -57,7 +52,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
             </div>
           </div>
-        `
+        `;
+        
+      const result = await sendEmail({
+        to: testEmail,
+        subject: "Teste de Email - LogMene",
+        html: htmlContent
       });
       
       if (result) {
@@ -69,130 +69,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Erro ao enviar email de teste:", error);
-      res.status(500).json({ success: false, message: `Erro ao enviar email: ${error}` });
-    }
-  });
-
-  // Rota para testar o envio de email usando Brevo
-  app.get("/api/test/brevo-email", async (req, res) => {
-    try {
-      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
-      
-      console.log(`Iniciando teste de email usando Brevo para: ${testEmail}`);
-      
-      const textContent = `
-        Teste do Sistema LogMene
-        
-        Este é um email de teste do sistema LogMene usando o serviço Brevo.
-        Se você está recebendo este email, o serviço de email Brevo está funcionando corretamente!
-        Data e hora do teste: ${new Date().toLocaleString('pt-BR')}
-        
-        Este é um email automático de teste, por favor não responda.
-        © ${new Date().getFullYear()} LogMene. Todos os direitos reservados.
-      `;
-      
-      const htmlContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
-              <h2>LogMene - Sistema de Logística</h2>
-            </div>
-            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
-              <p>Este é um email de teste do sistema LogMene usando o serviço <strong>Brevo</strong>.</p>
-              <p>Se você está recebendo este email, o serviço de email Brevo está funcionando corretamente!</p>
-              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
-            </div>
-            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
-              <p>Este é um email automático de teste, por favor não responda.</p>
-              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
-            </div>
-          </div>
-        `;
-        
-      const result = await sendBrevoEmail({
-        to: testEmail,
-        from: "LogMene <noreply@logmene.com>",
-        subject: "Teste do Brevo - LogMene",
-        html: htmlContent,
-        text: textContent
-      });
-      
-      if (result) {
-        console.log(`Email de teste via Brevo enviado com sucesso para: ${testEmail}`);
-        res.json({ success: true, message: `Email de teste via Brevo enviado com sucesso para ${testEmail}` });
-      } else {
-        console.error(`Falha ao enviar email de teste via Brevo para: ${testEmail}`);
-        res.status(500).json({ success: false, message: "Falha ao enviar email de teste via Brevo" });
-      }
-    } catch (error) {
-      console.error("Erro ao enviar email de teste via Brevo:", error);
       console.error("Detalhes do erro:", error instanceof Error ? error.message : String(error));
       res.status(500).json({ 
         success: false, 
-        message: "Falha ao enviar email de teste via Brevo",
+        message: "Falha ao enviar email de teste",
         error: error instanceof Error ? error.message : String(error)
       });
     }
   });
   
-  // Rota para testar o email de nova solicitação de frete via Brevo (GET)
-  app.get("/api/test/freight-request-email", async (req, res) => {
-    try {
-      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
-      const companyName = req.query.name as string || "Empresa Teste";
-      
-      console.log(`Iniciando teste de email de nova solicitação para: ${testEmail}`);
-      
-      // Simulando detalhes de uma solicitação de frete
-      const freightDetails = `
-        <ul>
-          <li><strong>Origem:</strong> São Paulo, SP</li>
-          <li><strong>Destino:</strong> Rio de Janeiro, RJ</li>
-          <li><strong>Tipo de carga:</strong> Carga Geral</li>
-          <li><strong>Peso:</strong> 500 kg</li>
-          <li><strong>Volume:</strong> 2 m³</li>
-          <li><strong>Valor da Nota Fiscal:</strong> R$ 5.000,00</li>
-          <li><strong>Data de Coleta:</strong> 25/03/2025</li>
-          <li><strong>Data de Entrega:</strong> 27/03/2025</li>
-        </ul>
-      `;
-      
-      // Usando a função específica para novas solicitações via Brevo
-      const result = await sendNewFreightRequestBrevoEmail(
-        testEmail,
-        companyName,
-        12345, // ID fictício da solicitação
-        "Cliente Teste", // Nome fictício do cliente
-        freightDetails
-      );
-      
-      if (result) {
-        console.log(`Email de nova solicitação enviado com sucesso para: ${testEmail}`);
-        res.json({ 
-          success: true, 
-          message: `Email de nova solicitação enviado com sucesso para ${testEmail}` 
-        });
-      } else {
-        console.error(`Falha ao enviar email de nova solicitação para: ${testEmail}`);
-        res.status(500).json({ 
-          success: false, 
-          message: "Falha ao enviar email de nova solicitação" 
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao enviar email de nova solicitação:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Falha ao enviar email de nova solicitação",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-  
-  // Rota de teste de SMS removida conforme solicitação do cliente
-  
-  // Rota de teste de WhatsApp removida conforme solicitação do cliente
-  
-  // Rota para testar o email de nova solicitação de frete via Brevo (POST)
+  // Rota para testar o email de nova solicitação de frete
   app.post("/api/test/send-freight-request-email", async (req, res) => {
     try {
       const { email, name, requestId, clientName, freightDetails } = req.body;
@@ -204,10 +90,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`Iniciando teste de email de nova solicitação (POST) para: ${email}`);
+      console.log(`Iniciando teste de email de nova solicitação para: ${email}`);
       
-      // Usando a função específica para novas solicitações via Brevo
-      const result = await sendNewFreightRequestBrevoEmail(
+      const result = await sendNewFreightRequestEmail(
         email,
         name,
         requestId || 12345, // Usa o ID fornecido ou um valor padrão
@@ -227,20 +112,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (result) {
-        console.log(`Email de nova solicitação (POST) enviado com sucesso para: ${email}`);
+        console.log(`Email de nova solicitação enviado com sucesso para: ${email}`);
         res.json({ 
           success: true, 
           message: `Email de nova solicitação enviado com sucesso para ${email}` 
         });
       } else {
-        console.error(`Falha ao enviar email de nova solicitação (POST) para: ${email}`);
+        console.error(`Falha ao enviar email de nova solicitação para: ${email}`);
         res.status(500).json({ 
           success: false, 
           message: "Falha ao enviar email de nova solicitação" 
         });
       }
     } catch (error) {
-      console.error("Erro ao enviar email de nova solicitação (POST):", error);
+      console.error("Erro ao enviar email de nova solicitação:", error);
       res.status(500).json({ 
         success: false, 
         message: "Falha ao enviar email de nova solicitação",
