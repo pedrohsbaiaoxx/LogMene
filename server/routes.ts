@@ -34,9 +34,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota para testar envio de email usando SMTP do MailerSend
   app.get("/api/test/smtp", async (req, res) => {
     try {
-      const testEmail = req.query.email as string || "empresa@teste.com";
+      // Verificando se o email fornecido tem um domínio verificado
+      // MailerSend só permite enviar para domínios verificados
+      const userEmail = req.query.email as string || "empresa@teste.com";
       
-      console.log(`Iniciando teste de email via SMTP para: ${testEmail}`);
+      // A melhor prática seria usar um email verificado na plataforma MailerSend
+      // Para teste, usamos bigstone.dev.br, que é um domínio verificado
+      const testEmail = userEmail.includes("@bigstone.dev.br") ? 
+        userEmail : "test@bigstone.dev.br";
+      
+      console.log(`Iniciando teste de email via SMTP para: ${testEmail} (original: ${userEmail})`);
       
       // Importar o serviço SMTP de forma dinâmica para evitar problemas de ciclo de dependência
       const { sendEmailViaSMTP } = await import('./services/mailersend-smtp-service');
@@ -50,6 +57,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <p>Este é um email de teste do sistema LogMene usando conexão <strong>SMTP</strong> com o MailerSend.</p>
             <p>Se você está recebendo este email, o serviço de email via SMTP está funcionando corretamente!</p>
             <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+            <p><strong>Nota:</strong> O MailerSend requer que o domínio do destinatário seja verificado. 
+            ${userEmail !== testEmail ? `Por isso, redirecionamos o email para ${testEmail} em vez de ${userEmail}.` : ''}
+            </p>
           </div>
           <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
             <p>Este é um email automático de teste, por favor não responda.</p>
@@ -68,7 +78,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Email SMTP de teste enviado com sucesso para: ${testEmail}`);
         res.json({ 
           success: true, 
-          message: `Email de teste enviado com sucesso para ${testEmail} via SMTP`
+          message: `Email de teste enviado com sucesso para ${testEmail} via SMTP`,
+          note: userEmail !== testEmail ? 
+            `O email foi enviado para ${testEmail} em vez de ${userEmail} porque o MailerSend requer que o domínio do destinatário seja verificado.` : 
+            undefined
         });
       } else {
         console.error(`Falha ao enviar email SMTP de teste para: ${testEmail}`);
