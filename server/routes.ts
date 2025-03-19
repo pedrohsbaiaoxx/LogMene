@@ -168,8 +168,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Modificar o schema para permitir campos opcionais
       const modifiedSchema = insertQuoteSchema.extend({
-        value: z.number().min(0).optional(),
-        estimatedDays: z.number().min(1).optional(),
+        value: z.number().min(0),
+        estimatedDays: z.number().min(1),
       });
       
       const quoteData = modifiedSchema.parse(req.body);
@@ -192,9 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enviamos notificação ao cliente
       if (updatedRequest) {
-        // Use o valor da cotação se disponível, ou "não especificado" se não for fornecido
-        const quoteValue = quoteData.value !== undefined ? quoteData.value : 0;
-        sendQuoteNotification(updatedRequest.userId, quoteData.requestId, quoteValue);
+        sendQuoteNotification(updatedRequest.userId, quoteData.requestId, quoteData.value);
       }
       
       res.status(201).json(quote);
@@ -505,6 +503,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!request) {
         return res.status(404).json({ message: "Solicitação de frete não encontrada" });
       }
+      
+      // Verificar se a requisição tem status "accepted"
+      console.log("Status da requisição:", request.status);
       
       // Check if the current status is accepted
       if (request.status !== "accepted") {
