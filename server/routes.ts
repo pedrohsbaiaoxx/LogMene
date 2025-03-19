@@ -640,6 +640,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao enviar email" });
     }
   });
+  
+  // Temporário: Atualizar registros de fretes concluídos com data de conclusão
+  app.get("/api/update-completed-dates", ensureCompany, async (req, res) => {
+    try {
+      const completedRequests = await db
+        .select()
+        .from(freightRequests)
+        .where(eq(freightRequests.status, "completed"));
+      
+      const today = new Date();
+      let updatedCount = 0;
+      
+      for (const request of completedRequests) {
+        if (!request.completedAt) {
+          await db
+            .update(freightRequests)
+            .set({ completedAt: today })
+            .where(eq(freightRequests.id, request.id));
+          updatedCount++;
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `Atualizado ${updatedCount} registro(s) de fretes concluídos com a data de hoje.` 
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar datas de conclusão:", error);
+      res.status(500).json({ message: "Erro ao atualizar datas de conclusão" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
