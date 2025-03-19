@@ -50,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const emailData = {
         from: {
-          email: "logmene@rafaelcampos.dev" // Domínio verificado
+          email: "no-reply@mailersend.net" // Email padrão do MailerSend que não precisa de verificação
         },
         to: [
           {
