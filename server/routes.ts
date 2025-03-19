@@ -17,6 +17,7 @@ import { fromZodError } from "zod-validation-error";
 import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
 import { sendEmail as sendBrevoEmail, sendNewFreightRequestEmail as sendNewFreightRequestBrevoEmail } from "./services/brevo-email-service";
+import { sendNewFreightRequestSMS } from "./services/sms-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
@@ -332,28 +333,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </ul>
           `;
           
-          // Notificar cada empresa via notificação in-app e email
+          // Notificar cada empresa via notificação in-app e SMS
           for (const companyUser of companyUsers) {
             // Notificação in-app
             sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
             
-            // Email para empresa - preferimos usar Brevo se disponível
-            if (process.env.BREVO_API_KEY) {
-              await sendNewFreightRequestBrevoEmail(
-                companyUser.email,
+            // Enviar SMS para a empresa se tiver número de telefone cadastrado
+            if (companyUser.phone) {
+              await sendNewFreightRequestSMS(
+                companyUser.phone,
                 companyUser.fullName || companyUser.username,
                 freightRequest.id,
-                clientName,
-                freightDetails
+                clientName
               );
             } else {
-              await sendNewFreightRequestEmail(
-                companyUser.email,
-                companyUser.fullName || companyUser.username,
-                freightRequest.id,
-                clientName,
-                freightDetails
-              );
+              console.log(`Empresa ${companyUser.username} não tem número de telefone cadastrado. Não foi possível enviar SMS.`);
             }
           }
         }

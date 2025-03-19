@@ -1,4 +1,5 @@
 import { log } from '../vite';
+import nodemailer from 'nodemailer';
 
 // Interface para parâmetros do email
 export interface EmailParams {
@@ -10,21 +11,21 @@ export interface EmailParams {
 }
 
 /**
- * Função para enviar email usando o Brevo (Sendinblue) via API HTTP direta
- * Esta implementação usa fetch para enviar emails diretamente para a API REST do Brevo
- * em vez de usar a biblioteca sib-api-v3-sdk
+ * Função para enviar email usando o Brevo (Sendinblue) via SMTP
+ * Esta implementação usa nodemailer para enviar emails pelo servidor SMTP do Brevo
+ * que costuma ter melhor entrega do que a API REST
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  // Se não tiver a chave da API configurada, loga e simula o envio
-  if (!process.env.BREVO_API_KEY) {
+  // Se não tiver as credenciais SMTP configuradas, loga e simula o envio
+  if (!process.env.BREVO_SMTP_USER || !process.env.BREVO_SMTP_PASSWORD) {
     log(`[Email simulado] Para: ${params.to}, Assunto: ${params.subject}`, 'brevo-email');
     log(`[Email simulado] Conteúdo: ${params.text || params.html?.substring(0, 150)}...`, 'brevo-email');
-    log(`AVISO: BREVO_API_KEY não configurada. Configure para enviar emails reais.`, 'brevo-email');
+    log(`AVISO: Credenciais SMTP do Brevo não configuradas. Configure BREVO_SMTP_USER e BREVO_SMTP_PASSWORD para enviar emails reais.`, 'brevo-email');
     return true; // Retorna sucesso para não quebrar o fluxo da aplicação
   }
 
   try {
-    // Preparação dos dados para o email
+    // Extrair nome e email do remetente
     const fromEmail = params.from.includes('<') 
       ? params.from.match(/<(.+)>/)?.[1] || params.from 
       : params.from;
@@ -33,43 +34,32 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       ? params.from.match(/(.+)</)?.[1]?.trim() || 'LogMene' 
       : 'LogMene';
 
-    // Dados para a API do Brevo
-    const payload = {
-      sender: { 
-        name: fromName, 
-        email: fromEmail 
+    // Criar transportador SMTP para o Brevo
+    const transporter = nodemailer.createTransport({
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      secure: false, // TLS
+      auth: {
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_PASSWORD,
       },
-      to: [{ 
-        email: params.to 
-      }],
-      subject: params.subject,
-      htmlContent: params.html || '',
-      textContent: params.text || ''
-    };
-
-    log(`Enviando email via API Brevo para: ${params.to}`, 'brevo-email');
-    
-    // Chamada direta para a API do Brevo via HTTP
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': process.env.BREVO_API_KEY
-      },
-      body: JSON.stringify(payload)
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-      throw new Error(`API Brevo retornou erro ${response.status}: ${JSON.stringify(errorData)}`);
-    }
+    log(`Enviando email via SMTP Brevo para: ${params.to}`, 'brevo-email');
+    
+    // Enviar email via SMTP
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: params.to,
+      subject: params.subject,
+      text: params.text || '',
+      html: params.html || '',
+    });
 
-    const result = await response.json();
-    log(`Email enviado com sucesso via Brevo. ID: ${result?.messageId || 'N/A'}`, 'brevo-email');
+    log(`Email enviado com sucesso via SMTP Brevo. ID: ${info.messageId}`, 'brevo-email');
     return true;
   } catch (error) {
-    log(`Erro ao enviar email via Brevo: ${error}`, 'brevo-email');
+    log(`Erro ao enviar email via SMTP Brevo: ${error}`, 'brevo-email');
     
     if (error instanceof Error) {
       log(`Detalhes do erro: ${error.message}`, 'brevo-email');
