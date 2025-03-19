@@ -676,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para gerar relatório de fretes de um cliente em PDF
-  app.get("/api/report/client/:id", async (req, res) => {
+  app.get("/api/report/client/:id", ensureAuthenticated, async (req, res) => {
     try {
       const clientId = parseInt(req.params.id);
       if (isNaN(clientId)) {
@@ -728,7 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para gerar relatório mensal de fretes de um cliente em PDF
-  app.get("/api/report/client/:id/monthly/:month/:year", async (req, res) => {
+  app.get("/api/report/client/:id/monthly/:month/:year", ensureAuthenticated, async (req, res) => {
     try {
       const clientId = parseInt(req.params.id);
       const month = parseInt(req.params.month);
