@@ -688,6 +688,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!client || client.role !== 'client') {
         return res.status(404).json({ message: "Cliente não encontrado" });
       }
+      
+      // Verificar se o usuário logado é o próprio cliente ou uma empresa (que pode ver relatórios de qualquer cliente)
+      if (req.user?.id !== clientId && req.user?.role !== 'company') {
+        return res.status(403).json({ message: "Acesso não autorizado ao relatório" });
+      }
 
       // Obter todos os fretes do cliente
       const requests = await storage.getFreightRequestsByUserId(clientId);
@@ -742,6 +747,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const client = await storage.getUser(clientId);
       if (!client || client.role !== 'client') {
         return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+      
+      // Verificar se o usuário logado é o próprio cliente ou uma empresa (que pode ver relatórios de qualquer cliente)
+      if (req.user?.id !== clientId && req.user?.role !== 'company') {
+        return res.status(403).json({ message: "Acesso não autorizado ao relatório" });
       }
 
       // Obter todos os fretes do cliente
