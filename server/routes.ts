@@ -711,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Importar o serviço de PDF
-      const { generateClientFreightReport } = await import('./services/pdf-service-new');
+      const { generateClientFreightReport } = await import('./services/html-report');
       
       // Gerar o PDF
       const pdfBuffer = await generateClientFreightReport(
@@ -762,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endDate = new Date(year, month, 0); // Último dia do mês
       
       // Importar o serviço de PDF
-      const { generateClientFreightReport } = await import('./services/pdf-service-new');
+      const { generateClientFreightReport } = await import('./services/html-report');
       
       // Gerar o PDF
       const pdfBuffer = await generateClientFreightReport(
