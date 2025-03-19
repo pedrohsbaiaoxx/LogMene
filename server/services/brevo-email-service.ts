@@ -1,36 +1,4 @@
 import { log } from '../vite';
-import * as SibApiV3Sdk from 'sib-api-v3-sdk';
-
-// Inicialização da API do Brevo/Sendinblue
-let apiInstance: any = null;
-
-// Função para inicializar a API do Brevo
-function initBrevoApi() {
-  if (apiInstance) {
-    return apiInstance; // Se já inicializado, retorna a instância existente
-  }
-
-  // Verifica se a chave da API está configurada
-  if (!process.env.BREVO_API_KEY) {
-    log('BREVO_API_KEY não configurada. O serviço de email não funcionará corretamente.', 'brevo-email');
-    return null;
-  }
-
-  try {
-    // Configuração da API
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = process.env.BREVO_API_KEY;
-
-    // Criação da instância da API de emails transacionais
-    apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    log('API do Brevo inicializada com sucesso', 'brevo-email');
-    return apiInstance;
-  } catch (error) {
-    log(`Erro ao inicializar a API do Brevo: ${error}`, 'brevo-email');
-    return null;
-  }
-}
 
 // Interface para parâmetros do email
 export interface EmailParams {
@@ -42,7 +10,9 @@ export interface EmailParams {
 }
 
 /**
- * Função para enviar email usando o Brevo (Sendinblue)
+ * Função para enviar email usando o Brevo (Sendinblue) via API HTTP direta
+ * Esta implementação usa fetch para enviar emails diretamente para a API REST do Brevo
+ * em vez de usar a biblioteca sib-api-v3-sdk
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   // Se não tiver a chave da API configurada, loga e simula o envio
@@ -51,13 +21,6 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     log(`[Email simulado] Conteúdo: ${params.text || params.html?.substring(0, 150)}...`, 'brevo-email');
     log(`AVISO: BREVO_API_KEY não configurada. Configure para enviar emails reais.`, 'brevo-email');
     return true; // Retorna sucesso para não quebrar o fluxo da aplicação
-  }
-
-  // Inicializa a API do Brevo
-  const api = initBrevoApi();
-  if (!api) {
-    log('Falha ao inicializar a API do Brevo', 'brevo-email');
-    return false;
   }
 
   try {
@@ -70,18 +33,39 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       ? params.from.match(/(.+)</)?.[1]?.trim() || 'LogMene' 
       : 'LogMene';
 
-    const sendSmtpEmail = {
-      to: [{ email: params.to }],
-      sender: { email: fromEmail, name: fromName },
+    // Dados para a API do Brevo
+    const payload = {
+      sender: { 
+        name: fromName, 
+        email: fromEmail 
+      },
+      to: [{ 
+        email: params.to 
+      }],
       subject: params.subject,
-      htmlContent: params.html,
-      textContent: params.text
+      htmlContent: params.html || '',
+      textContent: params.text || ''
     };
 
-    log(`Enviando email via Brevo para: ${params.to}`, 'brevo-email');
+    log(`Enviando email via API Brevo para: ${params.to}`, 'brevo-email');
     
-    // Envia o email
-    const result = await api.sendTransacEmail(sendSmtpEmail);
+    // Chamada direta para a API do Brevo via HTTP
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': process.env.BREVO_API_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+      throw new Error(`API Brevo retornou erro ${response.status}: ${JSON.stringify(errorData)}`);
+    }
+
+    const result = await response.json();
     log(`Email enviado com sucesso via Brevo. ID: ${result?.messageId || 'N/A'}`, 'brevo-email');
     return true;
   } catch (error) {
@@ -89,10 +73,6 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     
     if (error instanceof Error) {
       log(`Detalhes do erro: ${error.message}`, 'brevo-email');
-      if ('response' in error) {
-        const response = (error as any).response;
-        log(`Resposta da API: ${JSON.stringify(response?.body || {})}`, 'brevo-email');
-      }
     }
     
     return false;
@@ -201,10 +181,27 @@ export function createNotificationEmail(
 </html>
 `;
 
+  // Versão texto simples do email (requerido pela API Brevo)
+  const text = `
+LogMene - Sistema de Logística
+
+${template.intro}
+
+${message}
+
+Por favor, acesse o sistema para visualizar mais detalhes e tomar as ações necessárias.
+
+Se você tiver dúvidas, entre em contato com nossa equipe de suporte.
+
+Este é um email automático, por favor não responda.
+© ${new Date().getFullYear()} LogMene. Todos os direitos reservados.
+`;
+
   return {
     to: userEmail,
     from,
     subject: template.subject,
-    html
+    html,
+    text
   };
 }

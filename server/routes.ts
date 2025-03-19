@@ -77,11 +77,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Iniciando teste de email usando Brevo para: ${testEmail}`);
       
-      const result = await sendBrevoEmail({
-        to: testEmail,
-        from: "LogMene <noreply@logmene.com>",
-        subject: "Teste do Brevo - LogMene",
-        html: `
+      const textContent = `
+        Teste do Sistema LogMene
+        
+        Este é um email de teste do sistema LogMene usando o serviço Brevo.
+        Se você está recebendo este email, o serviço de email Brevo está funcionando corretamente!
+        Data e hora do teste: ${new Date().toLocaleString('pt-BR')}
+        
+        Este é um email automático de teste, por favor não responda.
+        © ${new Date().getFullYear()} LogMene. Todos os direitos reservados.
+      `;
+      
+      const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
               <h2>LogMene - Sistema de Logística</h2>
@@ -96,7 +103,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
             </div>
           </div>
-        `
+        `;
+        
+      const result = await sendBrevoEmail({
+        to: testEmail,
+        from: "LogMene <noreply@logmene.com>",
+        subject: "Teste do Brevo - LogMene",
+        html: htmlContent,
+        text: textContent
       });
       
       if (result) {
@@ -108,7 +122,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Erro ao enviar email de teste via Brevo:", error);
-      res.status(500).json({ success: false, message: `Erro ao enviar email via Brevo: ${error}` });
+      console.error("Detalhes do erro:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ 
+        success: false, 
+        message: "Falha ao enviar email de teste via Brevo",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
