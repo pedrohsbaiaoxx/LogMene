@@ -172,7 +172,9 @@ export default function RequestDetailsPage() {
               <div className="flex flex-col md:flex-row items-start md:items-center text-neutral-700">
                 <div className="flex items-center">
                   <MapPin className="text-primary mr-2 h-5 w-5" />
-                  <span className="font-medium">{request.origin}</span>
+                  <span className="font-medium">
+                    {request.originStreet}, {request.originCity} - {request.originState}
+                  </span>
                 </div>
                 <div className="hidden md:block mx-4">
                   <ArrowDownIcon className="rotate-90 text-neutral-400 h-5 w-5" />
@@ -182,7 +184,9 @@ export default function RequestDetailsPage() {
                 </div>
                 <div className="flex items-center">
                   <Flag className="text-[#00ACC1] mr-2 h-5 w-5" />
-                  <span className="font-medium">{request.destination}</span>
+                  <span className="font-medium">
+                    {request.destinationStreet}, {request.destinationCity} - {request.destinationState}
+                  </span>
                 </div>
               </div>
             </div>
