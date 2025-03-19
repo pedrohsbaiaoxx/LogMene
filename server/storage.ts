@@ -702,21 +702,18 @@ export class MemStorage implements IStorage {
     };
     this.deliveryProofs.set(id, proof);
     
-    // Atualizar o status da solicitação para "completed"
+    // Não atualiza mais o status para "completed" aqui
+    // O status só será atualizado quando a empresa marcar explicitamente como concluído
+    // após a anexação do comprovante
+    
+    // Criar notificação para o cliente
     const request = this.freightRequests.get(insertProof.requestId);
     if (request) {
-      const updatedRequest = {
-        ...request,
-        status: "completed" as const
-      };
-      this.freightRequests.set(request.id, updatedRequest);
-      
-      // Criar notificação para o cliente
       this.createNotification({
         userId: request.userId,
         requestId: request.id,
         type: "proof_uploaded",
-        message: "O comprovante de entrega da sua carga foi adicionado.",
+        message: "O comprovante de entrega da sua carga foi adicionado. Aguarde a confirmação da transportadora.",
         read: false
       });
     }
