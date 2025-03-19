@@ -285,6 +285,7 @@ export class DatabaseStorage implements IStorage {
       ...insertQuote,
       value: insertQuote.value ?? null,
       estimatedDays: insertQuote.estimatedDays ?? null,
+      distanceKm: insertQuote.distanceKm ?? null,
     };
     
     const [quote] = await db.insert(quotes).values(quoteData).returning();
@@ -695,12 +696,14 @@ export class MemStorage implements IStorage {
     const notes = insertQuote.notes === undefined ? null : insertQuote.notes;
     const value = insertQuote.value === undefined ? null : insertQuote.value;
     const estimatedDays = insertQuote.estimatedDays === undefined ? null : insertQuote.estimatedDays;
+    const distanceKm = insertQuote.distanceKm === undefined ? null : insertQuote.distanceKm;
     
     const quote: Quote = {
       requestId: insertQuote.requestId,
       value,
       estimatedDays,
       notes,
+      distanceKm,
       id,
       createdAt
     };
