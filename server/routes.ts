@@ -1315,7 +1315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Rota para testar o serviço de notificações
   app.post('/api/test/notification', async (req, res) => {
-    const { userId, requestId, type, message, sendEmail } = req.body;
+    const { userId, requestId, type, message, sendEmail, sendWhatsApp } = req.body;
     
     if (!userId || !type || !message) {
       return res.status(400).json({ 
@@ -1325,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      console.log(`Testando serviço de notificação para usuário ${userId}`);
+      log(`Testando serviço de notificação para usuário ${userId} (tipo: ${type})`, 'notification-test');
       
       const { sendNotification } = await import('./services/notification-service');
       
@@ -1338,13 +1338,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      log(`Canais de envio: email=${!!sendEmail}, whatsapp=${!!sendWhatsApp}`, 'notification-test');
+      log(`Dados do usuário: email=${user.email}, telefone=${user.phone}`, 'notification-test');
+      
       // Enviar notificação usando o serviço
       const result = await sendNotification({
         userId,
         requestId: requestId || null,
         type,
         message,
-        sendEmail
+        sendEmail: sendEmail !== false,
+        sendWhatsApp: sendWhatsApp !== false
       });
       
       if (result) {
@@ -1358,9 +1362,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.json({ 
           success: true, 
-          message: `Notificação enviada com sucesso para ${user.username} (${user.email})`,
+          message: `Notificação enviada com sucesso para ${user.username}`,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            role: user.role
+          },
           notification: lastNotification,
-          emailSent: sendEmail
+          channels: {
+            inApp: true,
+            email: sendEmail !== false && !!user.email,
+            whatsApp: sendWhatsApp !== false && !!user.phone && 
+                    !!process.env.TWILIO_ACCOUNT_SID && !!process.env.TWILIO_AUTH_TOKEN
+          },
+          whatsAppSimulationMode: process.env.WHATSAPP_SIMULATION_MODE === "true"
         });
       } else {
         return res.status(500).json({ 
