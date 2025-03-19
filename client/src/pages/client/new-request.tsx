@@ -189,8 +189,11 @@ export default function NewRequestPage() {
                               type="number" 
                               min="0" 
                               step="0.01"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              value={field.value === 0 && form.formState.touchedFields.weight ? "" : field.value}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                field.onChange(value);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -208,8 +211,11 @@ export default function NewRequestPage() {
                               type="number" 
                               min="0" 
                               step="0.01"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              value={field.value === 0 && form.formState.touchedFields.volume ? "" : field.value}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                field.onChange(value);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />

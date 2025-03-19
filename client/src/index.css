@@ -53,13 +53,15 @@ body, html {
   }
 
   /* Estilos para campos de formulário forçando o modo escuro */
+  /* Melhorar a legibilidade em todos os inputs independente do tema */
   input,
   textarea,
   select {
     @apply bg-slate-800 text-slate-100 border-slate-700;
+    color: white !important;
   }
   
-  /* Força a cor do placeholder para ser legível no modo claro */
+  /* Força a cor do placeholder para ser legível */
   input::placeholder,
   textarea::placeholder,
   select::placeholder {
