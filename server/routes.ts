@@ -16,6 +16,7 @@ import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/mailersend-service";
+import axios from "axios";
 // Serviço de SMS removido conforme solicitação do cliente
 // Serviço de WhatsApp removido conforme solicitação do cliente
 import { 
@@ -29,6 +30,88 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+
+  // Rota para testar o MailerSend diretamente pela API
+  app.get("/api/test/mailersend", async (req, res) => {
+    try {
+      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
+      
+      console.log(`Iniciando teste direto da API do MailerSend para: ${testEmail}`);
+      
+      const apiUrl = 'https://api.mailersend.com/v1/email';
+      const mailersendApiKey = process.env.MAILERSEND_API_KEY;
+      
+      if (!mailersendApiKey) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "API key do MailerSend não encontrada nas variáveis de ambiente" 
+        });
+      }
+      
+      const emailData = {
+        from: {
+          email: "logmene@rafaelcampos.dev" // Domínio verificado
+        },
+        to: [
+          {
+            email: testEmail
+          }
+        ],
+        subject: "Teste Direto API MailerSend - LogMene",
+        text: `Este é um email de teste direto da API do MailerSend enviado em ${new Date().toLocaleString('pt-BR')}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste Direto API</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um email de teste <strong>direto da API</strong> do MailerSend.</p>
+              <p>Se você está recebendo este email, a conexão direta com a API está funcionando corretamente!</p>
+              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        `
+      };
+      
+      try {
+        const response = await axios.post(apiUrl, emailData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Authorization': `Bearer ${mailersendApiKey}`
+          }
+        });
+        
+        console.log("Resposta da API do MailerSend:", response.data);
+        res.json({ 
+          success: true, 
+          message: `Email enviado com sucesso para ${testEmail} usando chamada direta à API`,
+          response: response.data
+        });
+      } catch (apiError: any) {
+        console.error("Erro na chamada da API do MailerSend:", apiError);
+        console.error("Resposta de erro:", apiError.response?.data);
+        
+        res.status(500).json({
+          success: false,
+          message: "Erro ao chamar a API do MailerSend",
+          error: apiError.message,
+          details: apiError.response?.data || 'Sem detalhes do erro'
+        });
+      }
+    } catch (error) {
+      console.error("Erro geral:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Erro interno ao processar a requisição",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Rota para testar o envio de email usando MailerSend
   app.get("/api/test/send-email", async (req, res) => {
