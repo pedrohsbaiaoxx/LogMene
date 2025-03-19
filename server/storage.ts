@@ -91,16 +91,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {
-    // Adaptar o request para incluir os campos legados 'origin' e 'destination'
-    const modifiedRequest = {
-      ...insertRequest,
-      // Gerar campos legados concatenados para manter compatibilidade
-      origin: `${insertRequest.originStreet}, ${insertRequest.originCity}, ${insertRequest.originState}`,
-      destination: `${insertRequest.destinationStreet}, ${insertRequest.destinationCity}, ${insertRequest.destinationState}`,
-    };
+    // Usar SQL bruto para garantir que todos os campos sejam preenchidos corretamente
+    const originValue = `${insertRequest.originStreet}, ${insertRequest.originCity}, ${insertRequest.originState}`;
+    const destinationValue = `${insertRequest.destinationStreet}, ${insertRequest.destinationCity}, ${insertRequest.destinationState}`;
     
-    const [request] = await db.insert(freightRequests).values(modifiedRequest).returning();
-    return request;
+    const sql = `
+      INSERT INTO freight_requests (
+        user_id, origin, destination, cargo_type, weight, volume, pickup_date, delivery_date, 
+        notes, require_insurance, status, origin_street, origin_city, origin_state, 
+        destination_street, destination_city, destination_state, invoice_value
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+      )
+      RETURNING *
+    `;
+    
+    const { pool } = require('./db');
+    const result = await pool.query(sql, [
+      insertRequest.userId, // $1
+      originValue, // $2
+      destinationValue, // $3
+      insertRequest.cargoType, // $4
+      insertRequest.weight, // $5
+      insertRequest.volume, // $6
+      insertRequest.pickupDate, // $7
+      insertRequest.deliveryDate, // $8
+      insertRequest.notes || null, // $9
+      insertRequest.requireInsurance || false, // $10
+      "pending", // $11
+      insertRequest.originStreet, // $12
+      insertRequest.originCity, // $13
+      insertRequest.originState, // $14
+      insertRequest.destinationStreet, // $15
+      insertRequest.destinationCity, // $16
+      insertRequest.destinationState, // $17
+      insertRequest.invoiceValue // $18
+    ]);
+    
+    // Retornar o objeto criado
+    return result.rows[0];
   }
 
   async getFreightRequestById(id: number): Promise<FreightRequestWithQuote | undefined> {
