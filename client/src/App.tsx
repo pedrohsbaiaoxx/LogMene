@@ -16,6 +16,7 @@ import CompanyRequestDetailsPage from "@/pages/company/request-details";
 import CreateQuotePage from "@/pages/company/create-quote";
 import ClientsPage from "@/pages/company/clients";
 import CreateClientPage from "@/pages/company/create-client";
+import ClientRequestsPage from "@/pages/company/client-requests";
 import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
@@ -67,6 +68,11 @@ function Router() {
       <ProtectedRoute 
         path="/company/requests/:id" 
         component={CompanyRequestDetailsPage} 
+        allowedRoles={["company"]} 
+      />
+      <ProtectedRoute 
+        path="/company/client/:id/requests" 
+        component={ClientRequestsPage} 
         allowedRoles={["company"]} 
       />
       

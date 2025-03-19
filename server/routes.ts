@@ -293,6 +293,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get specific user by ID (company only)
+  app.get("/api/users/:id", ensureCompany, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Remove password before sending
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar usuário" });
+    }
+  });
+  
+  // Get all requests for a specific client (company only)
+  app.get("/api/client/:id/requests", ensureCompany, async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "ID de cliente inválido" });
+      }
+      
+      // Verifica se o usuário existe e é um cliente
+      const user = await storage.getUser(clientId);
+      if (!user) {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+      
+      if (user.role !== "client") {
+        return res.status(403).json({ message: "O usuário especificado não é um cliente" });
+      }
+      
+      const requests = await storage.getFreightRequestsByUserId(clientId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Erro ao buscar solicitações do cliente:", error);
+      res.status(500).json({ message: "Erro ao buscar solicitações do cliente" });
+    }
+  });
+  
   // Delete client (company only)
   app.delete("/api/company/clients/:id", ensureCompany, async (req, res) => {
     try {
