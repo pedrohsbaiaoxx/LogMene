@@ -4,7 +4,7 @@ import { log } from '../vite';
 // Twilio credentials
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER;
+const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER || '+14155238886'; // Número do Twilio Sandbox como fallback
 
 // Modo de simulação (útil para desenvolvimento e testes)
 // Configurando para modo de produção para permitir envio real de mensagens
@@ -52,7 +52,9 @@ export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
     log(`Mensagem: "${body}"`, 'twilio-whatsapp');
     
     // WhatsApp requer o prefixo 'whatsapp:' nos números
-    const from = `whatsapp:${twilioWhatsappNumber}`;
+    // Remove espaços e outros caracteres do número do remetente
+    const cleanedFromNumber = twilioWhatsappNumber.replace(/\s+/g, '');
+    const from = `whatsapp:${cleanedFromNumber}`;
     const to = `whatsapp:${formattedNumber}`;
     
     log(`Número de origem formatado: ${from}`, 'twilio-whatsapp');
@@ -109,7 +111,7 @@ function formatPhoneNumber(phone: string): string {
   
   // Se o número já estiver no formato internacional (começando com +)
   if (phone.startsWith('+')) {
-    return phone.substring(1); // Remove o + inicial para o formato do WhatsApp
+    return phone.replace(/\+/g, '').replace(/\s+/g, ''); // Remove o + inicial e espaços para o formato do WhatsApp
   }
   
   // Se o número começar com 0, remove o 0

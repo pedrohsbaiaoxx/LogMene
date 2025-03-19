@@ -322,6 +322,19 @@ export default function TestNotificationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 text-sm">
+              <p className="mb-2">
+                <strong>Importante:</strong> Este formulário envia mensagens WhatsApp reais através do Twilio em modo de produção.
+              </p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>O número de telefone deve estar no formato internacional (ex: +5535999990000)</li>
+                <li>O número de destino precisa estar cadastrado no WhatsApp</li>
+                <li>Para receber mensagens, o número de destino precisa ter iniciado uma conversa com o número do Twilio</li>
+                <li>Nos planos básicos do Twilio, só é possível enviar para números verificados na plataforma</li>
+                <li>Em caso de erro, verifique os logs detalhados no console do servidor</li>
+              </ul>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Número de Telefone (formato internacional com +)</Label>
               <Input 
@@ -332,7 +345,9 @@ export default function TestNotificationPage() {
                   ...whatsappForm,
                   phoneNumber: e.target.value
                 })}
+                placeholder="+5535999990000"
               />
+              <p className="text-xs text-muted-foreground">Ex: +5535999990000 (formato internacional com código do país)</p>
             </div>
             
             <div className="space-y-2">
@@ -344,10 +359,11 @@ export default function TestNotificationPage() {
                   ...whatsappForm,
                   message: e.target.value
                 })}
+                placeholder="Digite aqui a mensagem que deseja enviar via WhatsApp..."
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col space-y-4">
             <Button 
               onClick={handleWhatsAppSubmit} 
               disabled={loading}
@@ -356,6 +372,10 @@ export default function TestNotificationPage() {
             >
               {loading ? "Enviando..." : "ENVIAR WHATSAPP EM PRODUÇÃO"}
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Ao clicar no botão acima, você concorda em enviar uma mensagem real para o número informado.
+              Mensagens enviadas podem gerar custos na sua conta do Twilio.
+            </p>
           </CardFooter>
         </Card>
       </div>
