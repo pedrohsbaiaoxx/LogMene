@@ -54,10 +54,25 @@ body, html {
 
   /* Estilos para campos de formulário forçando o modo escuro */
   /* Melhorar a legibilidade em todos os inputs independente do tema */
+  /* Cores base para o modo claro */
+  .light input,
+  .light textarea,
+  .light select,
   input,
   textarea,
   select {
-    @apply bg-slate-800 text-slate-100 border-slate-700;
+    @apply bg-white border-gray-300;
+    color: #333 !important;
+  }
+  
+  /* Configuração específica para o modo escuro */
+  :root input,
+  :root textarea,
+  :root select,
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    @apply bg-slate-800 border-slate-700;
     color: white !important;
   }
   
