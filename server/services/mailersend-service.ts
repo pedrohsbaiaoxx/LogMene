@@ -5,8 +5,8 @@ const mailerSend = new MailerSend({
 });
 
 // Configuração do remetente padrão
-// Usando email do MailerSend para evitar erro de verificação de domínio
-const defaultSender = new Sender('noreply@mailersend.com', 'LogMene');
+// Usando endereço de email que é gerado automaticamente pelo MailerSend para cada conta
+const defaultSender = new Sender('no-reply@mailersend.net', 'LogMene');
 
 // Interface para os parâmetros de envio de email
 // Note que 'from' não é necessário pois usamos o defaultSender
@@ -32,6 +32,17 @@ export async function sendEmail(params: SendEmailParams): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Erro ao enviar email via MailerSend:', error);
+    
+    // Log detalhado para depuração
+    if (error instanceof Error) {
+      console.error(`Detalhes do erro: ${error.message}`);
+      
+      // Detalhes específicos da API do MailerSend
+      if ((error as any).body) {
+        console.error('Resposta da API:', (error as any).body);
+      }
+    }
+    
     return false;
   }
 }

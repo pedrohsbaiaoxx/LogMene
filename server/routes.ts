@@ -987,14 +987,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      console.log(`Testando envio de email para: ${email}`);
+      console.log(`==== TESTE DE EMAIL - INICIANDO ====`);
+      console.log(`Destinatário: ${email}`);
+      console.log(`Serviço: MailerSend`);
+      console.log(`Data/Hora: ${new Date().toISOString()}`);
+      console.log(`===============================`);
       
-      // Usar o MailerSend mesmo para o teste de fallback, já que migramos completamente
-      console.log('Enviando email via MailerSend com log detalhado...');
       try {
         // Importar diretamente do serviço de MailerSend
         const { sendEmail } = await import('./services/mailersend-service');
         
+        console.log('Enviando email via MailerSend...');
         const result = await sendEmail({
           to: email,
           subject: 'Teste de Email do Sistema LogMene',
@@ -1032,11 +1035,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (emailError) {
         console.error('Erro detalhado ao enviar email:', emailError);
+        
+        // Formatando para resposta mais legível
+        let errorDetails: Record<string, any> = {
+          message: emailError instanceof Error ? emailError.message : 'Erro desconhecido'
+        };
+        
+        // Extrair informações específicas do MailerSend
+        if ((emailError as any).body) {
+          errorDetails.api_response = (emailError as any).body;
+          errorDetails.status_code = (emailError as any).statusCode;
+        }
+        
         return res.status(500).json({ 
           success: false, 
-          message: `Falha ao enviar email via MailerSend.`,
-          error: emailError instanceof Error ? emailError.message : String(emailError),
-          details: emailError
+          message: `Falha ao enviar email via MailerSend. ${errorDetails.message}`,
+          error_details: errorDetails
         });
       }
     } catch (error) {
@@ -1050,6 +1064,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Funcionalidade de envio de WhatsApp removida conforme solicitação do cliente
+  
+  // Rota simplificada para testar o serviço MailerSend (direta, sem formatação)
+  app.get('/api/test/mailersend', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+    }
+    
+    try {
+      console.log(`==== TESTE DIRETO MAILERSEND ====`);
+      console.log(`Email: ${email}`);
+      
+      const MailerSend = await import('@mailersend/mailersend');
+      const { Sender, Recipient, EmailParams } = MailerSend;
+      
+      if (!process.env.MAILERSEND_API_KEY) {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'MAILERSEND_API_KEY não configurada no ambiente'
+        });
+      }
+      
+      const mailerSend = new MailerSend.default({
+        apiKey: process.env.MAILERSEND_API_KEY,
+      });
+      
+      // Mostrar chave parcial (apenas primeiros e últimos caracteres)
+      const apiKey = process.env.MAILERSEND_API_KEY;
+      const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
+      console.log(`Usando chave API: ${maskedKey}`);
+      
+      const sender = new Sender('no-reply@mailersend.net', 'LogMene Teste Direto');
+      console.log(`Remetente: ${sender.email}, ${sender.name}`);
+      
+      const recipients = [new Recipient(email)];
+      console.log(`Destinatário: ${email}`);
+      
+      // Email muito simples para facilitar depuração
+      const emailParams = new EmailParams()
+        .setFrom(sender)
+        .setTo(recipients)
+        .setSubject('Teste Direto MailerSend')
+        .setText('Este é um teste direto do serviço MailerSend. Hora: ' + new Date().toISOString());
+      
+      console.log('Enviando email de teste...');
+      
+      try {
+        const response = await mailerSend.email.send(emailParams);
+        console.log('Resposta do MailerSend:', response);
+        
+        return res.json({
+          success: true,
+          message: 'Email enviado com sucesso via teste direto',
+          details: {
+            to: email,
+            response
+          }
+        });
+      } catch (apiError) {
+        console.error('Erro na API do MailerSend:', apiError);
+        
+        let errorDetails: Record<string, any> = { message: 'Erro desconhecido' };
+        if (apiError instanceof Error) {
+          errorDetails.message = apiError.message;
+        }
+        
+        if ((apiError as any).body) {
+          errorDetails.api_response = (apiError as any).body;
+          errorDetails.status_code = (apiError as any).statusCode;
+        }
+        
+        return res.status(500).json({
+          success: false,
+          message: 'Falha ao enviar email no teste direto',
+          error_details: errorDetails
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar teste direto:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao configurar teste direto do MailerSend',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Rota para testar o serviço de notificações
   app.post('/api/test/notification', async (req, res) => {
