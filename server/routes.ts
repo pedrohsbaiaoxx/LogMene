@@ -1273,6 +1273,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Enviando email de teste via API direta...');
       
       try {
+        // Import axios dynamically to avoid issues with loading the module
+        const axios = (await import('axios')).default;
         const response = await axios.post(apiUrl, requestData, {
           headers: {
             'Content-Type': 'application/json',
@@ -1287,7 +1289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Email enviado com sucesso via teste direto',
           details: {
             to: email,
-            response
+            response: response.data
           }
         });
       } catch (apiError) {
@@ -1298,9 +1300,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errorDetails.message = apiError.message;
         }
         
-        if ((apiError as any).body) {
-          errorDetails.api_response = (apiError as any).body;
-          errorDetails.status_code = (apiError as any).statusCode;
+        if ((apiError as any).response) {
+          errorDetails.api_response = (apiError as any).response.data;
+          errorDetails.status_code = (apiError as any).response.status;
         }
         
         return res.status(500).json({
@@ -1319,6 +1321,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para testar o serviço SMTP do MailerSend
+  app.get('/api/test/smtp', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+    }
+    
+    try {
+      console.log(`==== TESTE SMTP MAILERSEND ====`);
+      console.log(`Email: ${email}`);
+      
+      const { sendEmailViaSMTP } = await import('./services/mailersend-smtp-service');
+      
+      const result = await sendEmailViaSMTP({
+        to: email,
+        subject: 'Teste SMTP do LogMene',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste SMTP</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um teste do serviço <strong>SMTP do MailerSend</strong>.</p>
+              <p>Email enviado para: <strong>${email}</strong></p>
+              <p>Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result) {
+        return res.json({
+          success: true,
+          message: 'Email enviado com sucesso via SMTP',
+          details: { 
+            to: email,
+            method: 'SMTP MailerSend'
+          }
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Falha ao enviar email via SMTP'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao testar SMTP:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao configurar teste SMTP do MailerSend',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Rota para testar o mecanismo de fallback de email para domínios não verificados
+  app.get('/api/test/notification-fallback', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+    }
+    
+    try {
+      console.log(`==== TESTE FALLBACK EMAIL ====`);
+      console.log(`Email: ${email}`);
+      
+      // Teste especial para verificar o mecanismo de fallback
+      // Forçar um email que precisaria de fallback (não verificado no MailerSend)
+      const { sendEmailViaSMTP } = await import('./services/mailersend-smtp-service');
+      
+      const result = await sendEmailViaSMTP({
+        to: email,
+        subject: 'Teste do Mecanismo de Fallback - LogMene',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste de Fallback</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um teste do mecanismo de <strong>fallback para domínios não verificados</strong>.</p>
+              <p>Email original: <strong>${email}</strong></p>
+              <p>Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result) {
+        return res.json({
+          success: true,
+          message: 'Teste de fallback executado com sucesso',
+          details: { 
+            to: email,
+            note: 'Se este é um domínio não verificado pelo MailerSend, o email deve ter sido redirecionado para o endereço de fallback com uma nota adicional.'
+          }
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Falha ao testar mecanismo de fallback'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao testar fallback:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao testar mecanismo de fallback',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Rota para testar o serviço de notificações
   app.post('/api/test/notification', async (req, res) => {
     const { userId, requestId, type, message, sendEmail } = req.body;
@@ -1398,6 +1516,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recurso de notificação por WhatsApp removido conforme solicitação do cliente
+  
+  // Rota principal para testar serviço de email
+  app.get('/api/test/send-email', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+    }
+    
+    try {
+      console.log(`==== TESTE EMAIL STANDARD ====`);
+      console.log(`Email: ${email}`);
+      
+      // Importar o módulo emailService
+      const emailModule = await import('./services/email-service');
+      
+      const result = await emailModule.sendEmail({
+        to: email,
+        from: 'LogMene <no-reply@logmene.com.br>',
+        subject: 'Teste de Email - LogMene',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste de Email</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um teste do serviço padrão de email.</p>
+              <p>Email enviado para: <strong>${email}</strong></p>
+              <p>Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result) {
+        return res.json({
+          success: true,
+          message: 'Email enviado com sucesso',
+          details: { 
+            to: email,
+            method: 'Standard Email Service'
+          }
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Falha ao enviar email'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar email:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao enviar email',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   return httpServer;
 }
