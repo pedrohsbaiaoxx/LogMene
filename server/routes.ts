@@ -132,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Rota para testar o email de nova solicitação de frete via Brevo
+  // Rota para testar o email de nova solicitação de frete via Brevo (GET)
   app.get("/api/test/freight-request-email", async (req, res) => {
     try {
       const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
@@ -178,6 +178,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Erro ao enviar email de nova solicitação:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Falha ao enviar email de nova solicitação",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Rota para testar o email de nova solicitação de frete via Brevo (POST)
+  app.post("/api/test/send-freight-request-email", async (req, res) => {
+    try {
+      const { email, name, requestId, clientName, freightDetails } = req.body;
+      
+      if (!email || !name) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Parâmetros obrigatórios: email e name" 
+        });
+      }
+      
+      console.log(`Iniciando teste de email de nova solicitação (POST) para: ${email}`);
+      
+      // Usando a função específica para novas solicitações via Brevo
+      const result = await sendNewFreightRequestBrevoEmail(
+        email,
+        name,
+        requestId || 12345, // Usa o ID fornecido ou um valor padrão
+        clientName || "Cliente Teste", // Usa o nome fornecido ou um valor padrão
+        freightDetails || `
+          <ul>
+            <li><strong>Origem:</strong> São Paulo, SP</li>
+            <li><strong>Destino:</strong> Rio de Janeiro, RJ</li>
+            <li><strong>Tipo de carga:</strong> Carga Geral</li>
+            <li><strong>Peso:</strong> 500 kg</li>
+            <li><strong>Volume:</strong> 2 m³</li>
+            <li><strong>Valor da Nota Fiscal:</strong> R$ 5.000,00</li>
+            <li><strong>Data de Coleta:</strong> 25/03/2025</li>
+            <li><strong>Data de Entrega:</strong> 27/03/2025</li>
+          </ul>
+        `
+      );
+      
+      if (result) {
+        console.log(`Email de nova solicitação (POST) enviado com sucesso para: ${email}`);
+        res.json({ 
+          success: true, 
+          message: `Email de nova solicitação enviado com sucesso para ${email}` 
+        });
+      } else {
+        console.error(`Falha ao enviar email de nova solicitação (POST) para: ${email}`);
+        res.status(500).json({ 
+          success: false, 
+          message: "Falha ao enviar email de nova solicitação" 
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email de nova solicitação (POST):", error);
       res.status(500).json({ 
         success: false, 
         message: "Falha ao enviar email de nova solicitação",
