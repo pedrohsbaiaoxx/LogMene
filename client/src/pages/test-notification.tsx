@@ -140,6 +140,40 @@ export default function TestNotificationPage() {
   
   // Função de envio de WhatsApp removida conforme solicitação do cliente
   
+  // Função para testar diretamente a API do MailerSend (implementação mais simples)
+  const handleDirectTest = async () => {
+    setLoading(true);
+    setResult(null);
+    
+    try {
+      const response = await fetch(`/api/test/mailersend?email=${encodeURIComponent(emailForm.email)}`);
+      const data = await response.json();
+      setResult(data);
+      
+      if (response.ok) {
+        toast({
+          title: "Teste direto concluído",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Erro no teste direto",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao testar MailerSend diretamente:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao testar o MailerSend diretamente. Verifique o console para mais detalhes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div className="container mx-auto pb-8">
       <Header title="Ferramentas de Teste" />
@@ -252,21 +286,31 @@ export default function TestNotificationPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
+          <CardFooter className="flex flex-wrap justify-between gap-2">
             <Button 
               onClick={handleEmailSubmit} 
               disabled={loading}
             >
-              {loading ? "Enviando..." : "Enviar Email via MailerSend"}
+              {loading ? "Enviando..." : "Enviar Email"}
             </Button>
             
-            <Button 
-              onClick={handleFallbackTest} 
-              disabled={loading}
-              variant="outline"
-            >
-              {loading ? "Testando..." : "Teste Alternativo"}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleDirectTest} 
+                disabled={loading}
+                variant="secondary"
+              >
+                {loading ? "Testando..." : "Teste Direto"}
+              </Button>
+              
+              <Button 
+                onClick={handleFallbackTest} 
+                disabled={loading}
+                variant="outline"
+              >
+                {loading ? "Testando..." : "Teste Alternativo"}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
         
