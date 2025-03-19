@@ -53,10 +53,31 @@ export async function sendNotification({
             message
           );
 
-          await sendBrevoEmail(emailParams);
-          log(`Email enviado via Brevo para ${user.email}`, 'notification-service');
+          try {
+            // Tentamos com Brevo primeiro
+            const result = await sendBrevoEmail(emailParams);
+            if (result) {
+              log(`Email enviado via Brevo para ${user.email}`, 'notification-service');
+            } else {
+              throw new Error('Falha no envio com Brevo');
+            }
+          } catch (brewoError) {
+            log(`Falha no envio com Brevo, tentando serviço padrão: ${brewoError}`, 'notification-service');
+            
+            // Fallback para o serviço de email original
+            const fallbackParams = createEmailNotification(
+              user.email,
+              user.fullName || user.username,
+              type,
+              requestId || 0,
+              message
+            );
+            
+            await sendEmail(fallbackParams);
+            log(`Email enviado via serviço padrão para ${user.email} (fallback)`, 'notification-service');
+          }
         } else {
-          // Fallback para o serviço de email original
+          // Se não tiver Brevo configurado, usa serviço padrão
           const emailParams = createEmailNotification(
             user.email,
             user.fullName || user.username,

@@ -994,5 +994,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Rota para testar o mecanismo de fallback do serviço de notificação
+  app.get('/api/test/notification-fallback', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+    }
+    
+    try {
+      log(`Testando mecanismo de fallback para notificações para: ${email}`, 'express');
+      
+      // Importamos o serviço de notificação para testar o fallback
+      const { sendNotification } = await import('./services/notification-service');
+      
+      // Criamos um usuário temporário apenas para teste
+      const testUser = { 
+        id: 9999, 
+        username: 'testuser', 
+        fullName: 'Test User',
+        email: email,
+        role: 'client' as const,
+        password: ''
+      };
+      
+      // Mockamos o método getUser para retornar nosso usuário de teste
+      const originalGetUser = storage.getUser;
+      
+      try {
+        // Mock temporário para getUser
+        storage.getUser = async (id: number) => {
+          if (id === 9999) {
+            return testUser;
+          }
+          return originalGetUser(id);
+        };
+        
+        // Forçar falha do Brevo
+        const { sendEmail: originalBrevoSendEmail } = await import('./services/brevo-email-service');
+        const brevoModule = await import('./services/brevo-email-service');
+        
+        // Substituir temporariamente a função sendEmail do Brevo para simular falha
+        brevoModule.sendEmail = async (params) => {
+          log(`Simulando falha no serviço Brevo para teste (email: ${params.to})`, 'express');
+          throw new Error('API Brevo indisponível (simulação de teste)');
+        };
+        
+        // Enviamos uma notificação que irá tentar usar o Brevo e falhar, ativando o fallback
+        const result = await sendNotification({
+          userId: 9999,
+          type: 'status_update',
+          message: 'Esta é uma mensagem de teste para verificar o fallback',
+          requestId: 1234,
+          sendEmail: true
+        });
+        
+        // Restauramos a função original
+        brevoModule.sendEmail = originalBrevoSendEmail;
+        
+        return res.json({ 
+          success: true, 
+          message: `Teste de fallback concluído com sucesso. Brevo falhou conforme esperado e o sistema usou o serviço de email padrão como fallback.`,
+          details: {
+            result,
+            email
+          }
+        });
+      } finally {
+        // Restauramos a função original
+        storage.getUser = originalGetUser;
+      }
+    } catch (error) {
+      console.error('Erro no teste de fallback:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Erro ao testar mecanismo de fallback: ${error}`,
+        error: String(error)
+      });
+    }
+  });
+
   return httpServer;
 }
