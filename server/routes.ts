@@ -14,7 +14,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendEmail } from "./services/email-service";
+import { sendEmail, sendNewFreightRequestEmail } from "./services/email-service";
 import { 
   sendStatusUpdateNotification, 
   sendQuoteNotification, 
@@ -102,9 +102,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Usar o nome completo do cliente para a notificação
           const clientName = req.user!.fullName || req.user!.username;
           
-          // Notificar cada empresa
+          // Preparar detalhes do frete para o email
+          const freightDetails = `
+            <ul>
+              <li><strong>Origem:</strong> ${requestData.originCity}, ${requestData.originState}</li>
+              <li><strong>Destino:</strong> ${requestData.destinationCity}, ${requestData.destinationState}</li>
+              <li><strong>Tipo de Carga:</strong> ${requestData.cargoType}</li>
+              <li><strong>Peso:</strong> ${requestData.weight} kg</li>
+              <li><strong>Volume:</strong> ${requestData.volume} m³</li>
+              <li><strong>Valor da Nota Fiscal:</strong> R$ ${requestData.invoiceValue.toFixed(2)}</li>
+              <li><strong>Data de Coleta:</strong> ${requestData.pickupDate}</li>
+              <li><strong>Data de Entrega:</strong> ${requestData.deliveryDate}</li>
+            </ul>
+          `;
+          
+          // Notificar cada empresa via notificação in-app e email
           for (const companyUser of companyUsers) {
+            // Notificação in-app
             sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
+            
+            // Email para empresa
+            await sendNewFreightRequestEmail(
+              companyUser.email,
+              companyUser.fullName || companyUser.username,
+              freightRequest.id,
+              clientName,
+              freightDetails
+            );
           }
         }
         
