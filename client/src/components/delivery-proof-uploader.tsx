@@ -31,7 +31,7 @@ import { apiRequest } from "@/lib/queryClient";
 // Esquema de validação para o formulário de upload
 const deliveryProofSchema = z.object({
   proofImage: z.string().min(5, {
-    message: "URL da imagem deve ter pelo menos 5 caracteres",
+    message: "A imagem é obrigatória",
   }),
   notes: z.string().optional(),
 });
@@ -46,6 +46,8 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isViewMode, setIsViewMode] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Buscar comprovante existente
   const { 
@@ -99,6 +101,60 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
       });
     },
   });
+
+  // Função para converter arquivo em base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Handler para upload de imagem
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUploading(true);
+    try {
+      if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        
+        // Verificar se o arquivo é uma imagem
+        if (!file.type.match('image.*')) {
+          toast({
+            title: "Formato inválido",
+            description: "Por favor, selecione um arquivo de imagem válido (JPG, PNG, etc).",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Verificar o tamanho do arquivo (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "Arquivo muito grande",
+            description: "O tamanho máximo permitido é 5MB.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Converter para base64
+        const base64 = await convertToBase64(file);
+        setImagePreview(base64);
+        form.setValue("proofImage", base64);
+      }
+    } catch (error) {
+      console.error("Erro ao processar imagem:", error);
+      toast({
+        title: "Erro ao processar imagem",
+        description: "Ocorreu um erro ao processar a imagem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   function onSubmit(values: z.infer<typeof deliveryProofSchema>) {
     uploadMutation.mutate(values);
@@ -163,12 +219,56 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
           Enviar Comprovante de Entrega
         </CardTitle>
         <CardDescription>
-          Forneça uma URL de imagem do comprovante de entrega para esta solicitação
+          Selecione uma imagem do seu dispositivo ou forneça uma URL
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
+            {/* Área de upload de arquivo */}
+            <div className="mb-4">
+              <FormLabel>Enviar imagem do dispositivo</FormLabel>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 transition-colors hover:border-primary/50 cursor-pointer">
+                <Input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="cursor-pointer"
+                  disabled={isUploading}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Formatos suportados: JPG, PNG, GIF (máx. 5MB)
+                </p>
+              </div>
+            </div>
+            
+            {/* Preview da imagem se disponível */}
+            {imagePreview && (
+              <div className="mb-4">
+                <FormLabel>Preview da imagem</FormLabel>
+                <div className="aspect-video rounded-md overflow-hidden border bg-muted/20">
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview do comprovante" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Ou URL da imagem */}
+            <div className="relative mb-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                  ou use uma URL
+                </span>
+              </div>
+            </div>
+            
             <FormField
               control={form.control}
               name="proofImage"
@@ -182,7 +282,7 @@ export function DeliveryProofUploader({ requestId, requestStatus, onSuccess }: D
                     />
                   </FormControl>
                   <FormDescription>
-                    URL da imagem do comprovante de entrega (foto da assinatura, comprovante, etc)
+                    Link direto para a imagem do comprovante de entrega
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
