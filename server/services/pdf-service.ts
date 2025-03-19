@@ -31,6 +31,7 @@ export async function generateClientFreightReport(
     end.setHours(23, 59, 59, 999);
     
     filteredRequests = requests.filter(request => {
+      if (!request.createdAt) return false;
       const createdAt = new Date(request.createdAt);
       return createdAt >= start && createdAt <= end;
     });
@@ -59,7 +60,12 @@ export async function generateClientFreightReport(
       formatISODateToDisplay(request.pickupDate),
       formatISODateToDisplay(request.deliveryDate),
       (request.quote?.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-      request.completedAt ? formatISODateToDisplay(request.completedAt.toISOString()) : '-'
+      request.completedAt ? formatISODateToDisplay(request.completedAt instanceof Date 
+        ? request.completedAt.toISOString() 
+        : typeof request.completedAt === 'string'
+          ? request.completedAt
+          : new Date(request.completedAt).toISOString()
+      ) : '-'
     ])
   ];
   
@@ -106,7 +112,7 @@ export async function generateClientFreightReport(
   const pdfDocGenerator = pdfMake.createPdf(docDefinition);
   
   return new Promise<Buffer>((resolve) => {
-    pdfDocGenerator.getBuffer((buffer) => {
+    pdfDocGenerator.getBuffer((buffer: Buffer) => {
       resolve(buffer);
     });
   });
