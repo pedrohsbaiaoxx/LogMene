@@ -18,7 +18,7 @@ import {
   sendDeliveryProofNotification,
   sendNewFreightRequestNotification
 } from "./services/notification-service";
-import { getDistanceBetweenAddresses } from "./services/distance-service";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -506,28 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // API para cálculo de distância entre endereços
-  app.post("/api/calculate-distance", ensureAuthenticated, async (req, res) => {
-    try {
-      const { fromAddress, toAddress } = req.body;
-      
-      if (!fromAddress || !toAddress) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Os endereços de origem e destino são obrigatórios" 
-        });
-      }
-      
-      const result = await getDistanceBetweenAddresses(fromAddress, toAddress);
-      res.json(result);
-    } catch (error) {
-      console.error("Erro ao calcular distância:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Erro interno ao calcular distância entre endereços" 
-      });
-    }
-  });
+
   
   // Serviço de Email para notificações
   app.post("/api/send-email", ensureAuthenticated, async (req, res) => {
