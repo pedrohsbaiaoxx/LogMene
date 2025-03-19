@@ -86,6 +86,16 @@ export async function sendSMS(to: string, body: string): Promise<boolean> {
     
     if (error instanceof Error) {
       log(`Detalhes do erro: ${error.message}`, 'twilio-sms');
+      log(`Stack trace: ${error.stack}`, 'twilio-sms');
+      
+      // Se o erro tiver mais propriedades específicas do Twilio
+      const twilioError = error as any;
+      if (twilioError.code) {
+        log(`Código de erro Twilio: ${twilioError.code}`, 'twilio-sms');
+      }
+      if (twilioError.moreInfo) {
+        log(`Mais informações: ${twilioError.moreInfo}`, 'twilio-sms');
+      }
     }
     
     return false;
@@ -117,7 +127,11 @@ function formatPhoneNumber(phone: string): string {
   }
   
   // Adiciona o + no início
-  return '+' + cleaned;
+  const formattedNumber = '+' + cleaned;
+  
+  log(`Número formatado: ${phone} -> ${formattedNumber}`, 'twilio-sms');
+  
+  return formattedNumber;
 }
 
 /**
