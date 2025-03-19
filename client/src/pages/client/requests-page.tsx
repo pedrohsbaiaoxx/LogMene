@@ -51,7 +51,11 @@ export default function RequestsPage() {
       header: "Carga",
       cell: ({ row }) => (
         <span className="truncate max-w-[150px] block">
-          {row.original.cargoType}
+          {row.original.cargoType === "general" && "Carga Geral"}
+          {row.original.cargoType === "fragile" && "Frágil"}
+          {row.original.cargoType === "perishable" && "Perecível"}
+          {row.original.cargoType === "dangerous" && "Perigosa"}
+          {row.original.cargoType === "fractional" && "Fracionada"}
         </span>
       ),
     },
