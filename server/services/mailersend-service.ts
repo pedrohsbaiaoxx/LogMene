@@ -5,8 +5,11 @@ const mailerSend = new MailerSend({
 });
 
 // Configuração do remetente padrão
-const defaultSender = new Sender('noreply@logmene.com.br', 'LogMene');
+// Usando email do MailerSend para evitar erro de verificação de domínio
+const defaultSender = new Sender('noreply@mailersend.com', 'LogMene');
 
+// Interface para os parâmetros de envio de email
+// Note que 'from' não é necessário pois usamos o defaultSender
 interface SendEmailParams {
   to: string;
   subject: string;

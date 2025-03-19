@@ -979,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-  // Rota para testar o mecanismo de fallback do serviço de notificação
+  // Rota para testar o MailerSend com debug aprimorado
   app.get('/api/test/notification-fallback', async (req, res) => {
     const email = req.query.email as string;
     if (!email) {
@@ -987,62 +987,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      console.log(`Testando mecanismo de fallback para notificações para: ${email}`);
+      console.log(`Testando envio de email para: ${email}`);
       
-      // Desativar temporariamente a chave Brevo para forçar o uso do fallback
-      const originalBrevoKey = process.env.BREVO_API_KEY;
-      process.env.BREVO_API_KEY = '';
-      
-      // Tentamos enviar um email usando o serviço de notificação, que vai usar o fallback
-      const { sendEmail } = await import('./services/email-service');
-      
-      // Enviamos um email de teste via nodemailer
-      console.log('Enviando email diretamente via Nodemailer (fallback)...');
-      const result = await sendEmail({
-        to: email,
-        subject: 'Teste de Fallback do Sistema LogMene',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
-              <h2>LogMene - Teste de Fallback</h2>
+      // Usar o MailerSend mesmo para o teste de fallback, já que migramos completamente
+      console.log('Enviando email via MailerSend com log detalhado...');
+      try {
+        // Importar diretamente do serviço de MailerSend
+        const { sendEmail } = await import('./services/mailersend-service');
+        
+        const result = await sendEmail({
+          to: email,
+          subject: 'Teste de Email do Sistema LogMene',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+                <h2>LogMene - Teste do Serviço de Email</h2>
+              </div>
+              <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+                <p>Este é um email de teste do Sistema LogMene.</p>
+                <p>Se você está recebendo este email, o serviço de email está funcionando corretamente!</p>
+                <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+              </div>
+              <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+                <p>Este é um email automático de teste, por favor não responda.</p>
+                <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+              </div>
             </div>
-            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
-              <p>Este é um email de teste do mecanismo de fallback do Sistema LogMene.</p>
-              <p>Este email foi enviado usando o sistema de fallback (Nodemailer) porque o Brevo foi desativado para este teste.</p>
-              <p>Se você está recebendo este email, o mecanismo de fallback está funcionando corretamente!</p>
-              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
-            </div>
-            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
-              <p>Este é um email automático de teste, por favor não responda.</p>
-              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
-            </div>
-          </div>
-        `
-      });
-      
-      // Restaurar a chave Brevo
-      process.env.BREVO_API_KEY = originalBrevoKey;
-      
-      if (result) {
-        return res.json({ 
-          success: true, 
-          message: `Teste de fallback concluído com sucesso. Email enviado via Nodemailer (sistema de fallback).`,
-          details: {
-            usedFallback: true,
-            email
-          }
+          `
         });
-      } else {
+        
+        if (result) {
+          return res.json({ 
+            success: true, 
+            message: `Teste de email concluído com sucesso. Email enviado via MailerSend.`,
+            details: {
+              to: email
+            }
+          });
+        } else {
+          return res.status(500).json({ 
+            success: false, 
+            message: `Falha ao enviar email via MailerSend.`
+          });
+        }
+      } catch (emailError) {
+        console.error('Erro detalhado ao enviar email:', emailError);
         return res.status(500).json({ 
           success: false, 
-          message: `Falha ao enviar email via sistema de fallback.`
+          message: `Falha ao enviar email via MailerSend.`,
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+          details: emailError
         });
       }
     } catch (error) {
-      console.error('Erro no teste de fallback:', error);
+      console.error('Erro no teste de email:', error);
       return res.status(500).json({ 
         success: false, 
-        message: `Erro ao testar mecanismo de fallback: ${error}`,
+        message: `Erro ao testar serviço de email: ${error}`,
         error: String(error)
       });
     }

@@ -235,8 +235,8 @@ export default function TestNotificationPage() {
         {/* Teste de Email */}
         <Card>
           <CardHeader>
-            <CardTitle>Teste de Email</CardTitle>
-            <CardDescription>Enviar um email de teste</CardDescription>
+            <CardTitle>Teste de Email via MailerSend</CardTitle>
+            <CardDescription>Enviar um email de teste usando o serviço MailerSend</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -265,7 +265,7 @@ export default function TestNotificationPage() {
               disabled={loading}
               variant="outline"
             >
-              {loading ? "Testando..." : "Testar Fallback"}
+              {loading ? "Testando..." : "Teste Alternativo"}
             </Button>
           </CardFooter>
         </Card>
