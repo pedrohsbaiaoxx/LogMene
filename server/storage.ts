@@ -91,7 +91,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {
-    const [request] = await db.insert(freightRequests).values(insertRequest).returning();
+    // Adaptar o request para incluir os campos legados 'origin' e 'destination'
+    const modifiedRequest = {
+      ...insertRequest,
+      // Gerar campos legados concatenados para manter compatibilidade
+      origin: `${insertRequest.originStreet}, ${insertRequest.originCity}, ${insertRequest.originState}`,
+      destination: `${insertRequest.destinationStreet}, ${insertRequest.destinationCity}, ${insertRequest.destinationState}`,
+    };
+    
+    const [request] = await db.insert(freightRequests).values(modifiedRequest).returning();
     return request;
   }
 
