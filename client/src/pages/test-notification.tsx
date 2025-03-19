@@ -140,6 +140,40 @@ export default function TestNotificationPage() {
   
   // Função de envio de WhatsApp removida conforme solicitação do cliente
   
+  // Função para testar envio de email via SMTP do MailerSend
+  const handleSmtpTest = async () => {
+    setLoading(true);
+    setResult(null);
+    
+    try {
+      const response = await fetch(`/api/test/smtp?email=${encodeURIComponent(emailForm.email)}`);
+      const data = await response.json();
+      setResult(data);
+      
+      if (response.ok) {
+        toast({
+          title: "Teste SMTP concluído",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Erro no teste SMTP",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao testar SMTP:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao testar o envio via SMTP. Verifique o console para mais detalhes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Função para testar diretamente a API do MailerSend (implementação mais simples)
   const handleDirectTest = async () => {
     setLoading(true);
@@ -269,8 +303,8 @@ export default function TestNotificationPage() {
         {/* Teste de Email */}
         <Card>
           <CardHeader>
-            <CardTitle>Teste de Email via MailerSend</CardTitle>
-            <CardDescription>Enviar um email de teste usando o serviço MailerSend</CardDescription>
+            <CardTitle>Teste de Email</CardTitle>
+            <CardDescription>Teste de envio de email via API ou SMTP usando o MailerSend</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -294,11 +328,19 @@ export default function TestNotificationPage() {
               {loading ? "Enviando..." : "Enviar Email"}
             </Button>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                onClick={handleSmtpTest} 
+                disabled={loading}
+                variant="secondary"
+              >
+                {loading ? "Testando..." : "Teste SMTP"}
+              </Button>
+              
               <Button 
                 onClick={handleDirectTest} 
                 disabled={loading}
-                variant="secondary"
+                variant="outline"
               >
                 {loading ? "Testando..." : "Teste Direto"}
               </Button>
@@ -306,9 +348,10 @@ export default function TestNotificationPage() {
               <Button 
                 onClick={handleFallbackTest} 
                 disabled={loading}
-                variant="outline"
+                variant="ghost"
+                size="sm"
               >
-                {loading ? "Testando..." : "Teste Alternativo"}
+                {loading ? "Testando..." : "Alt"}
               </Button>
             </div>
           </CardFooter>

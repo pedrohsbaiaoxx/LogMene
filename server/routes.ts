@@ -31,6 +31,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
 
+  // Rota para testar envio de email usando SMTP do MailerSend
+  app.get("/api/test/smtp", async (req, res) => {
+    try {
+      const testEmail = req.query.email as string || "empresa@teste.com";
+      
+      console.log(`Iniciando teste de email via SMTP para: ${testEmail}`);
+      
+      // Importar o serviço SMTP de forma dinâmica para evitar problemas de ciclo de dependência
+      const { sendEmailViaSMTP } = await import('./services/mailersend-smtp-service');
+      
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+            <h2>LogMene - Teste SMTP</h2>
+          </div>
+          <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+            <p>Este é um email de teste do sistema LogMene usando conexão <strong>SMTP</strong> com o MailerSend.</p>
+            <p>Se você está recebendo este email, o serviço de email via SMTP está funcionando corretamente!</p>
+            <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+          </div>
+          <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+            <p>Este é um email automático de teste, por favor não responda.</p>
+            <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      `;
+      
+      const result = await sendEmailViaSMTP({
+        to: testEmail,
+        subject: "Teste SMTP - LogMene",
+        html: htmlContent
+      });
+      
+      if (result) {
+        console.log(`Email SMTP de teste enviado com sucesso para: ${testEmail}`);
+        res.json({ 
+          success: true, 
+          message: `Email de teste enviado com sucesso para ${testEmail} via SMTP`
+        });
+      } else {
+        console.error(`Falha ao enviar email SMTP de teste para: ${testEmail}`);
+        res.status(500).json({ 
+          success: false, 
+          message: "Falha ao enviar email de teste via SMTP"
+        });
+      }
+    } catch (error) {
+      console.error("Erro geral no teste SMTP:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Erro interno ao processar a requisição SMTP",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Rota para testar o MailerSend diretamente pela API
   app.get("/api/test/mailersend", async (req, res) => {
     try {
