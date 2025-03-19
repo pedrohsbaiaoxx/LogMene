@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { formatISODateToDisplay } from "@/lib/utils";
 
 export default function ClientHomePage() {
   const [, navigate] = useLocation();
@@ -71,7 +72,7 @@ export default function ClientHomePage() {
     {
       accessorKey: "pickupDate",
       header: "Data",
-      cell: ({ row }) => row.original.pickupDate,
+      cell: ({ row }) => formatISODateToDisplay(row.original.pickupDate),
     },
     {
       accessorKey: "cargo",

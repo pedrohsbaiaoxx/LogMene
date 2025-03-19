@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { DeliveryProofViewer } from "@/components/delivery-proof-viewer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatISODateToDisplay } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -222,12 +223,18 @@ export default function RequestDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-neutral-500">Retirada</p>
-                  <p className="font-medium text-neutral-700">{request.pickupDate}</p>
+                  <p className="font-medium text-neutral-700">{formatISODateToDisplay(request.pickupDate)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Entrega Desejada</p>
-                  <p className="font-medium text-neutral-700">{request.deliveryDate}</p>
+                  <p className="font-medium text-neutral-700">{formatISODateToDisplay(request.deliveryDate)}</p>
                 </div>
+                {request.completedAt && (
+                <div>
+                  <p className="text-sm text-neutral-500">Concluído em</p>
+                  <p className="font-medium text-neutral-700">{formatISODateToDisplay(request.completedAt.toString())}</p>
+                </div>
+                )}
               </div>
             </div>
             
@@ -291,7 +298,7 @@ export default function RequestDetailsPage() {
                   <div>
                     <p className="text-sm text-neutral-500">Entrega estimada até</p>
                     <p className="font-medium text-neutral-700">
-                      {request.pickupDate}
+                      {formatISODateToDisplay(request.deliveryDate)}
                     </p>
                   </div>
                 </div>
