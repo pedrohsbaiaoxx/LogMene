@@ -1065,5 +1065,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para testar o serviço de notificações
+  app.post('/api/test/notification', async (req, res) => {
+    const { userId, requestId, type, message, sendEmail } = req.body;
+    
+    if (!userId || !type || !message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Dados incompletos. userId, type e message são obrigatórios.'
+      });
+    }
+    
+    try {
+      console.log(`Testando serviço de notificação para usuário ${userId}`);
+      
+      const { sendNotification } = await import('./services/notification-service');
+      
+      // Verificar se o usuário existe
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: `Usuário com ID ${userId} não encontrado`
+        });
+      }
+      
+      // Enviar notificação usando o serviço
+      const result = await sendNotification({
+        userId,
+        requestId: requestId || null,
+        type,
+        message,
+        sendEmail
+      });
+      
+      if (result) {
+        // Buscar a notificação criada para confirmar
+        const notifications = await storage.getNotificationsByUserId(userId);
+        const lastNotification = notifications.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt) : new Date();
+          const dateB = b.createdAt ? new Date(b.createdAt) : new Date();
+          return dateB.getTime() - dateA.getTime();
+        })[0];
+        
+        return res.json({ 
+          success: true, 
+          message: `Notificação enviada com sucesso para ${user.username} (${user.email})`,
+          notification: lastNotification,
+          emailSent: sendEmail
+        });
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Falha ao enviar notificação'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao testar serviço de notificação:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Erro ao testar serviço de notificação: ${error}`,
+        error: String(error)
+      });
+    }
+  });
+
   return httpServer;
 }

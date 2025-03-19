@@ -18,6 +18,7 @@ import CreateQuotePage from "@/pages/company/create-quote";
 import ClientsPage from "@/pages/company/clients";
 import CreateClientPage from "@/pages/company/create-client";
 import ClientRequestsPage from "@/pages/company/client-requests";
+import TestNotificationPage from "@/pages/test-notification";
 import { useAuth } from "@/hooks/use-auth";
 
 function Router() {
@@ -80,6 +81,12 @@ function Router() {
         path="/company/client/:id/requests" 
         component={ClientRequestsPage} 
         allowedRoles={["company"]} 
+      />
+      
+      {/* Test tools route - for development only */}
+      <ProtectedRoute 
+        path="/test-notification" 
+        component={TestNotificationPage} 
       />
       
       {/* Fallback to 404 */}
