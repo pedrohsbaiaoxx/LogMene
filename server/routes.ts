@@ -675,6 +675,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para gerar relatório de fretes de um cliente em PDF
+  app.get("/api/report/client/:id", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "ID de cliente inválido" });
+      }
+
+      // Obter cliente
+      const client = await storage.getUser(clientId);
+      if (!client || client.role !== 'client') {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+
+      // Obter todos os fretes do cliente
+      const requests = await storage.getFreightRequestsByUserId(clientId);
+      
+      // Verificar período específico para o relatório
+      let startDate: Date | undefined;
+      let endDate: Date | undefined;
+      
+      if (req.query.startDate && req.query.endDate) {
+        startDate = new Date(req.query.startDate as string);
+        endDate = new Date(req.query.endDate as string);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return res.status(400).json({ message: "Datas inválidas" });
+        }
+      }
+      
+      // Importar o serviço de PDF
+      const { generateClientFreightReport } = await import('./services/pdf-service');
+      
+      // Gerar o PDF
+      const pdfBuffer = await generateClientFreightReport(
+        client.fullName, 
+        requests,
+        startDate,
+        endDate
+      );
+      
+      // Enviar o PDF como resposta
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=relatorio_${client.fullName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      res.status(500).json({ message: "Erro ao gerar relatório" });
+    }
+  });
+
+  // Endpoint para gerar relatório mensal de fretes de um cliente em PDF
+  app.get("/api/report/client/:id/monthly/:month/:year", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      if (isNaN(clientId) || isNaN(month) || isNaN(year) || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Parâmetros inválidos" });
+      }
+
+      // Obter cliente
+      const client = await storage.getUser(clientId);
+      if (!client || client.role !== 'client') {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+
+      // Obter todos os fretes do cliente
+      const requests = await storage.getFreightRequestsByUserId(clientId);
+      
+      // Definir o período do mês
+      const startDate = new Date(year, month - 1, 1); // Mês em JavaScript é 0-indexed
+      const endDate = new Date(year, month, 0); // Último dia do mês
+      
+      // Importar o serviço de PDF
+      const { generateClientFreightReport } = await import('./services/pdf-service');
+      
+      // Gerar o PDF
+      const pdfBuffer = await generateClientFreightReport(
+        client.fullName, 
+        requests,
+        startDate,
+        endDate
+      );
+      
+      // Enviar o PDF como resposta
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=relatorio_mensal_${client.fullName.replace(/\s+/g, '_')}_${month}_${year}.pdf`);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Erro ao gerar relatório mensal:", error);
+      res.status(500).json({ message: "Erro ao gerar relatório mensal" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
