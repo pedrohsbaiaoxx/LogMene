@@ -73,6 +73,7 @@ export const quotes = pgTable("quotes", {
   value: real("value").notNull(),
   estimatedDays: integer("estimated_days").notNull(),
   notes: text("notes"),
+  distanceKm: real("distance_km"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -93,9 +94,7 @@ export type InsertFreightRequest = z.infer<typeof insertFreightRequestSchema>;
 export type FreightRequest = typeof freightRequests.$inferSelect;
 
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
-export type Quote = typeof quotes.$inferSelect & {
-  distanceKm?: number;
-};
+export type Quote = typeof quotes.$inferSelect;
 
 // Delivery proofs
 export const deliveryProofs = pgTable("delivery_proofs", {
