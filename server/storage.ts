@@ -106,7 +106,6 @@ export class DatabaseStorage implements IStorage {
       RETURNING *
     `;
     
-    const { pool } = require('./db');
     const result = await pool.query(sql, [
       insertRequest.userId, // $1
       originValue, // $2
