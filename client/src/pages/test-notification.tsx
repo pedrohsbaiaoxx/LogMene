@@ -22,7 +22,8 @@ export default function TestNotificationPage() {
     requestId: 1,
     type: "status_update" as "status_update" | "quote_received" | "proof_uploaded",
     message: "Teste de notificação do sistema LogMene",
-    sendEmail: false
+    sendEmail: false,
+    sendWhatsApp: false
   });
   
   // Formulário para teste de email

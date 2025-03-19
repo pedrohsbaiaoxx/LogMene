@@ -7,8 +7,8 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER;
 
 // Modo de simulação (útil para desenvolvimento e testes)
-// Forçando ativação do modo de simulação para testes
-const SIMULATION_MODE = true;
+// Verificar a variável de ambiente para determinar se estamos no modo de simulação
+const SIMULATION_MODE = process.env.WHATSAPP_SIMULATION_MODE === 'true';
 
 // Log de inicialização para verificar as configurações
 log(`Serviço WhatsApp inicializado. Modo de simulação: ${SIMULATION_MODE ? 'ATIVADO' : 'DESATIVADO'}`, 'twilio-whatsapp-init');
