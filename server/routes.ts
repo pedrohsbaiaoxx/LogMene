@@ -187,6 +187,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para testar o envio de SMS
+  app.get("/api/test/sms", async (req, res) => {
+    try {
+      const phone = req.query.phone as string;
+      
+      if (!phone) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "O parâmetro 'phone' é obrigatório" 
+        });
+      }
+      
+      console.log(`Iniciando teste de SMS para o número: ${phone}`);
+      
+      // Enviando uma mensagem SMS de teste
+      const result = await sendNewFreightRequestSMS(
+        phone,
+        "Empresa Teste",
+        12345, // ID fictício da solicitação
+        "Cliente Teste" // Nome fictício do cliente
+      );
+      
+      if (result) {
+        console.log(`SMS de teste enviado com sucesso para: ${phone}`);
+        res.json({ 
+          success: true, 
+          message: `SMS de teste enviado com sucesso para ${phone}` 
+        });
+      } else {
+        console.error(`Falha ao enviar SMS de teste para: ${phone}`);
+        res.status(500).json({ 
+          success: false, 
+          message: "Falha ao enviar SMS de teste" 
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar SMS de teste:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Falha ao enviar SMS de teste",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Rota para testar o email de nova solicitação de frete via Brevo (POST)
   app.post("/api/test/send-freight-request-email", async (req, res) => {
     try {
