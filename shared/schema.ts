@@ -37,6 +37,7 @@ export const freightRequests = pgTable("freight_requests", {
   cargoType: text("cargo_type").notNull(),
   weight: real("weight").notNull(),
   volume: real("volume").notNull(),
+  invoiceValue: real("invoice_value").notNull(), // Valor da nota fiscal
   pickupDate: text("pickup_date").notNull(),
   deliveryDate: text("delivery_date").notNull(),
   notes: text("notes"),
@@ -56,6 +57,7 @@ export const insertFreightRequestSchema = createInsertSchema(freightRequests).pi
   cargoType: true,
   weight: true,
   volume: true,
+  invoiceValue: true,
   pickupDate: true,
   deliveryDate: true,
   notes: true,

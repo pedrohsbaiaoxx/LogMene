@@ -64,6 +64,7 @@ export default function NewRequestPage() {
     originState: z.string().nonempty({ message: "Estado de origem é obrigatório" }),
     destinationCity: z.string().nonempty({ message: "Cidade de destino é obrigatória" }),
     destinationState: z.string().nonempty({ message: "Estado de destino é obrigatório" }),
+    invoiceValue: z.number({ required_error: "Valor da nota é obrigatório" }).min(0.01, { message: "Valor da nota deve ser maior que zero" }),
   });
 
   // Create the form
@@ -78,7 +79,8 @@ export default function NewRequestPage() {
       destinationState: "",
       cargoType: "",
       weight: undefined, 
-      volume: undefined, 
+      volume: undefined,
+      invoiceValue: undefined,
       pickupDate: "",
       deliveryDate: "",
       notes: "",
@@ -129,7 +131,8 @@ export default function NewRequestPage() {
     const formattedValues = {
       ...values,
       weight: values.weight === undefined ? 0 : values.weight,
-      volume: values.volume === undefined ? 0 : values.volume
+      volume: values.volume === undefined ? 0 : values.volume,
+      invoiceValue: values.invoiceValue === undefined ? 0 : values.invoiceValue
     };
     
     createRequestMutation.mutate(formattedValues);
@@ -178,7 +181,7 @@ export default function NewRequestPage() {
                 {/* Cargo Details */}
                 <div>
                   <h3 className="text-lg font-medium text-neutral-700 mb-3">Detalhes da Carga</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
                       name="cargoType"
@@ -241,6 +244,29 @@ export default function NewRequestPage() {
                               min="0" 
                               step="0.01"
                               placeholder="Informe o volume"
+                              value={field.value === 0 || field.value === undefined ? "" : field.value}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                                field.onChange(value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="invoiceValue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor da Nota (R$)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0.01" 
+                              step="0.01"
+                              placeholder="Informe o valor da nota"
                               value={field.value === 0 || field.value === undefined ? "" : field.value}
                               onChange={(e) => {
                                 const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
