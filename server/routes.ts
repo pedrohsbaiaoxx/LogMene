@@ -180,6 +180,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const request = await storage.getFreightRequestById(requestId);
     
+    // Log da resposta para debug
+    console.log("REQUEST DETAILS:", JSON.stringify(request, null, 2));
+    
     if (!request) {
       return res.status(404).json({ message: "Freight request not found" });
     }
