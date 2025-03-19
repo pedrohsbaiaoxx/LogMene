@@ -781,7 +781,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Usa o novo serviço de email
       const result = await sendEmail({
         to,
-        from: 'noreply@logmene.com',
         subject,
         text: text || '',
         html: html || ''
@@ -943,13 +942,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Iniciando teste de envio de email para pedroxxsb@gmail.com");
       
       const to = 'pedroxxsb@gmail.com';
-      const from = process.env.EMAIL_USER || 'noreply@logmene.com';
-      
       console.log(`Tentando enviar email de teste para ${to}`);
       
       const result = await sendEmail({
         to: to,
-        from: from,
         subject: 'Teste de Email do LogMene',
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -1004,7 +1000,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Enviando email diretamente via Nodemailer (fallback)...');
       const result = await sendEmail({
         to: email,
-        from: 'LogMene <noreply@logmene.com>',
         subject: 'Teste de Fallback do Sistema LogMene',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
