@@ -56,8 +56,8 @@ export default function NewRequestPage() {
       origin: "",
       destination: "",
       cargoType: "",
-      weight: 0,
-      volume: 0,
+      weight: undefined, // Mudado de 0 para undefined para evitar valores iniciais
+      volume: undefined, // Mudado de 0 para undefined para evitar valores iniciais
       pickupDate: "",
       deliveryDate: "",
       notes: "",
@@ -90,7 +90,13 @@ export default function NewRequestPage() {
 
   // Submit handler
   function onSubmit(values: z.infer<typeof formSchema>) {
-    createRequestMutation.mutate(values);
+    // Convertendo undefined para 0 antes de enviar para o backend
+    const formattedValues = {
+      ...values,
+      weight: values.weight === undefined ? 0 : values.weight,
+      volume: values.volume === undefined ? 0 : values.volume
+    };
+    createRequestMutation.mutate(formattedValues);
   }
 
   return (
@@ -189,9 +195,10 @@ export default function NewRequestPage() {
                               type="number" 
                               min="0" 
                               step="0.01"
-                              value={field.value === 0 && form.formState.touchedFields.weight ? "" : field.value}
+                              placeholder="Informe o peso"
+                              value={field.value === 0 || field.value === undefined ? "" : field.value}
                               onChange={(e) => {
-                                const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
                                 field.onChange(value);
                               }}
                             />
@@ -211,9 +218,10 @@ export default function NewRequestPage() {
                               type="number" 
                               min="0" 
                               step="0.01"
-                              value={field.value === 0 && form.formState.touchedFields.volume ? "" : field.value}
+                              placeholder="Informe o volume"
+                              value={field.value === 0 || field.value === undefined ? "" : field.value}
                               onChange={(e) => {
-                                const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
                                 field.onChange(value);
                               }}
                             />
@@ -266,7 +274,11 @@ export default function NewRequestPage() {
                         <Textarea
                           placeholder="Informações adicionais sobre o frete"
                           rows={3}
-                          {...field}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
+                          name={field.name}
                         />
                       </FormControl>
                       <FormMessage />
@@ -281,8 +293,8 @@ export default function NewRequestPage() {
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                          checked={Boolean(field.value)}
+                          onCheckedChange={(checked) => field.onChange(checked ? true : false)}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
