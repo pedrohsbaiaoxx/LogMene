@@ -262,7 +262,7 @@ export default function CreateQuotePage() {
                             step="0.01"
                             {...field}
                             onChange={(e) => {
-                              const value = e.target.value ? parseFloat(e.target.value) : 0;
+                              const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
                               field.onChange(value);
                             }}
                           />
@@ -283,7 +283,7 @@ export default function CreateQuotePage() {
                             min="1" 
                             {...field}
                             onChange={(e) => {
-                              const value = e.target.value ? parseInt(e.target.value) : 1;
+                              const value = e.target.value === "" ? undefined : parseInt(e.target.value);
                               field.onChange(value);
                             }}
                           />

@@ -256,7 +256,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createQuote(insertQuote: InsertQuote): Promise<Quote> {
-    const [quote] = await db.insert(quotes).values(insertQuote).returning();
+    // Permitir valores null para campos opcionais
+    const quoteData = {
+      ...insertQuote,
+      value: insertQuote.value ?? null,
+      estimatedDays: insertQuote.estimatedDays ?? null,
+    };
+    
+    const [quote] = await db.insert(quotes).values(quoteData).returning();
     
     // Update freight request status to "quoted"
     const [request] = await db.select().from(freightRequests).where(eq(freightRequests.id, insertQuote.requestId));
@@ -635,15 +642,20 @@ export class MemStorage implements IStorage {
     const id = this.quoteCounter++;
     const createdAt = new Date();
     
-    // Garantir que notes não é undefined
+    // Garantir que campos opcionais não são undefined
     const notes = insertQuote.notes === undefined ? null : insertQuote.notes;
+    const value = insertQuote.value === undefined ? null : insertQuote.value;
+    const estimatedDays = insertQuote.estimatedDays === undefined ? null : insertQuote.estimatedDays;
     
-    const quote: Quote = { 
-      ...insertQuote, 
+    const quote: Quote = {
+      requestId: insertQuote.requestId,
+      value,
+      estimatedDays,
       notes,
-      id, 
-      createdAt 
+      id,
+      createdAt
     };
+    
     this.quotes.set(id, quote);
     
     // Update freight request status to "quoted"

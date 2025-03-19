@@ -9,7 +9,7 @@ import {
   insertDeliveryProofSchema, 
   insertNotificationSchema
 } from "@shared/schema";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendEmail } from "./services/email-service";
 import { 
