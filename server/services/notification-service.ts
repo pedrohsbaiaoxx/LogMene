@@ -1,12 +1,13 @@
 import { storage } from '../storage';
 import { createNotificationEmail as createEmailNotification, sendEmail } from './email-service';
 import { createNotificationEmail as createBrevoNotification, sendEmail as sendBrevoEmail } from './brevo-email-service';
+import { sendNewFreightRequestWhatsApp, sendStatusUpdateWhatsApp, sendDeliveryProofWhatsApp } from './whatsapp-service';
 import { log } from '../vite';
 import { InsertNotification } from '@shared/schema';
 
 /**
  * Serviço para enviar notificações para usuários
- * Permite envio de notificações in-app e por email quando a API key estiver configurada
+ * Permite envio de notificações in-app, email e WhatsApp quando configurados
  */
 export async function sendNotification({
   userId,
@@ -14,15 +15,17 @@ export async function sendNotification({
   type,
   message,
   sendEmail: shouldSendEmail = true,
+  sendWhatsApp: shouldSendWhatsApp = true,
 }: {
   userId: number;
   requestId: number | null;
   type: InsertNotification['type'];
   message: string;
   sendEmail?: boolean;
+  sendWhatsApp?: boolean;
 }) {
   try {
-    // Buscar usuário para obter email e nome
+    // Buscar usuário para obter email, telefone e nome
     const user = await storage.getUser(userId);
     if (!user) {
       log(`Usuário não encontrado para envio de notificação: ${userId}`, 'notification-service');
@@ -95,6 +98,37 @@ export async function sendNotification({
       }
     }
 
+    // Se solicitado e configurado, enviar também por WhatsApp
+    if (shouldSendWhatsApp && user.phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      try {
+        const userName = user.fullName || user.username;
+        let whatsappSent = false;
+
+        // Usar o tipo da notificação para determinar qual função de WhatsApp chamar
+        if (type === 'status_update' && requestId) {
+          // Extrair o status da mensagem para notificações de atualização de status
+          const statusMatch = message.match(/atualizado para "([^"]+)"/);
+          const status = statusMatch ? statusMatch[1] : 'atualizado';
+          
+          whatsappSent = await sendStatusUpdateWhatsApp(user.phone, userName, requestId, status);
+        } 
+        else if (type === 'proof_uploaded' && requestId) {
+          whatsappSent = await sendDeliveryProofWhatsApp(user.phone, userName, requestId);
+        }
+        else if (type === 'quote_received' && requestId) {
+          // Para notificações de cotação, usamos a função de status atualizado com status "cotado"
+          whatsappSent = await sendStatusUpdateWhatsApp(user.phone, userName, requestId, 'quoted');
+        }
+
+        if (whatsappSent) {
+          log(`WhatsApp enviado para ${user.phone} (${type})`, 'notification-service');
+        }
+      } catch (error) {
+        log(`Erro ao enviar WhatsApp: ${error}`, 'notification-service');
+        // Continuamos a execução mesmo se o WhatsApp falhar
+      }
+    }
+
     return true;
   } catch (error) {
     log(`Erro ao enviar notificação: ${error}`, 'notification-service');
@@ -162,10 +196,28 @@ export async function sendDeliveryProofNotification(userId: number, requestId: n
 export async function sendNewFreightRequestNotification(companyUserId: number, requestId: number, clientName: string) {
   const message = `Nova solicitação de frete recebida do cliente ${clientName}. Acesse o sistema para enviar uma cotação.`;
 
+  // Buscar a empresa para enviar WhatsApp direto pela função especializada
+  const company = await storage.getUser(companyUserId);
+  if (company && company.phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    try {
+      await sendNewFreightRequestWhatsApp(
+        company.phone,
+        company.fullName || company.username,
+        requestId,
+        clientName
+      );
+      log(`WhatsApp de nova solicitação enviado para ${company.phone}`, 'notification-service');
+    } catch (error) {
+      log(`Erro ao enviar WhatsApp de nova solicitação: ${error}`, 'notification-service');
+    }
+  }
+
   return sendNotification({
     userId: companyUserId,
     requestId,
     type: 'status_update',
     message,
+    // Não enviar WhatsApp pela função genérica, pois já enviamos diretamente acima
+    sendWhatsApp: false 
   });
 }

@@ -124,3 +124,41 @@ export async function sendNewFreightRequestWhatsApp(
 
   return await sendWhatsApp(companyPhone, message);
 }
+
+/**
+ * Envia uma notificação WhatsApp quando o status de uma solicitação é atualizado
+ */
+export async function sendStatusUpdateWhatsApp(
+  phone: string,
+  recipientName: string,
+  requestId: number,
+  status: string
+): Promise<boolean> {
+  // Traduz o status para um formato mais amigável
+  const statusMessages: Record<string, string> = {
+    'pending': 'em análise',
+    'quoted': 'cotada',
+    'accepted': 'aceita',
+    'rejected': 'rejeitada',
+    'completed': 'concluída'
+  };
+  
+  const statusText = statusMessages[status] || status;
+  
+  const message = `LogMene: A solicitação de frete #${requestId} teve seu status atualizado para "${statusText}". Acesse o sistema para mais detalhes.`;
+
+  return await sendWhatsApp(phone, message);
+}
+
+/**
+ * Envia uma notificação WhatsApp quando um comprovante de entrega é anexado
+ */
+export async function sendDeliveryProofWhatsApp(
+  phone: string,
+  recipientName: string,
+  requestId: number
+): Promise<boolean> {
+  const message = `LogMene: Um comprovante de entrega foi anexado à solicitação de frete #${requestId}. Acesse o sistema para visualizar o comprovante.`;
+  
+  return await sendWhatsApp(phone, message);
+}

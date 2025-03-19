@@ -237,6 +237,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/test/whatsapp", async (req, res) => {
     try {
       const phone = req.query.phone as string;
+      const type = req.query.type as string || 'new_request';
+      const requestId = Number(req.query.requestId) || 12345;
+      const status = req.query.status as string || 'accepted';
       
       if (!phone) {
         return res.status(400).json({ 
@@ -245,30 +248,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      log(`Iniciando teste de WhatsApp para o número: ${phone}`, 'whatsapp-test');
+      log(`Iniciando teste de WhatsApp [${type}] para o número: ${phone}`, 'whatsapp-test');
       
       // Log das variáveis de ambiente para debug
       const simulationModeValue = process.env.WHATSAPP_SIMULATION_MODE;
       log(`Variável de ambiente WHATSAPP_SIMULATION_MODE="${simulationModeValue}" (${typeof simulationModeValue})`, 'whatsapp-test');
       
-      // Enviando uma mensagem WhatsApp de teste
-      const result = await sendNewFreightRequestWhatsApp(
-        phone,
-        "Empresa Teste",
-        12345, // ID fictício da solicitação
-        "Cliente Teste" // Nome fictício do cliente
-      );
+      let result = false;
+      
+      // Escolher qual função chamar com base no tipo
+      if (type === 'delivery_proof') {
+        // Importar a função para enviar notificação de comprovante de entrega
+        const { sendDeliveryProofWhatsApp } = await import('./services/whatsapp-service');
+        result = await sendDeliveryProofWhatsApp(
+          phone,
+          "Usuário Teste",
+          requestId
+        );
+      } 
+      else if (type === 'status_update') {
+        // Importar a função para enviar notificação de atualização de status
+        const { sendStatusUpdateWhatsApp } = await import('./services/whatsapp-service');
+        result = await sendStatusUpdateWhatsApp(
+          phone,
+          "Usuário Teste",
+          requestId,
+          status
+        );
+      }
+      else {
+        // Padrão: nova solicitação
+        result = await sendNewFreightRequestWhatsApp(
+          phone,
+          "Empresa Teste",
+          requestId,
+          "Cliente Teste"
+        );
+      }
       
       if (result) {
-        log(`WhatsApp de teste enviado com sucesso para: ${phone}`, 'whatsapp-test');
+        log(`WhatsApp de teste [${type}] enviado com sucesso para: ${phone}`, 'whatsapp-test');
         res.json({ 
           success: true, 
           message: `WhatsApp de teste enviado com sucesso para ${phone}`,
-          simulation_mode: true,
-          phone_formatted: phone.replace(/\D/g, '')
+          simulation_mode: process.env.WHATSAPP_SIMULATION_MODE === "true",
+          phone_formatted: phone.replace(/\D/g, ''),
+          type,
+          requestId
         });
       } else {
-        log(`Falha ao enviar WhatsApp de teste para: ${phone}`, 'whatsapp-test');
+        log(`Falha ao enviar WhatsApp de teste [${type}] para: ${phone}`, 'whatsapp-test');
         res.status(500).json({ 
           success: false, 
           message: "Falha ao enviar WhatsApp de teste" 
@@ -278,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       log(`Erro ao enviar WhatsApp de teste: ${error}`, 'whatsapp-test');
       res.status(500).json({ 
         success: false, 
-        message: "Falha ao enviar WhatsApp de teste",
+        message: "Erro ao enviar WhatsApp de teste",
         error: error instanceof Error ? error.message : String(error)
       });
     }
@@ -1344,6 +1373,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ 
         success: false, 
         message: `Erro ao testar serviço de notificação: ${error}`,
+        error: String(error)
+      });
+    }
+  });
+
+  // Rota de teste para envio de WhatsApp com atualização de status
+  app.get("/api/test/status-whatsapp", async (req, res) => {
+    try {
+      const phone = req.query.phone as string;
+      const requestId = Number(req.query.requestId) || 12345;
+      const status = req.query.status as string || "accepted";
+      const userId = Number(req.query.userId) || 2;
+
+      if (!phone) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Parâmetro 'phone' é obrigatório"
+        });
+      }
+
+      log(`Iniciando teste de atualização de status via WhatsApp para o número: ${phone}`, 'whatsapp-status-test');
+      log(`Variável de ambiente WHATSAPP_SIMULATION_MODE="${process.env.WHATSAPP_SIMULATION_MODE}" (${typeof process.env.WHATSAPP_SIMULATION_MODE})`, 'whatsapp-status-test');
+
+      // Simula o envio de uma notificação de atualização de status
+      const { sendStatusUpdateWhatsApp } = await import('./services/whatsapp-service');
+      const result = await sendStatusUpdateWhatsApp(phone, "Usuário de Teste", requestId, status);
+
+      if (result) {
+        return res.json({
+          success: true,
+          message: `WhatsApp de atualização de status enviado com sucesso para ${phone}`,
+          simulation_mode: process.env.WHATSAPP_SIMULATION_MODE === "true",
+          phone_formatted: phone,
+          status,
+          requestId
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Erro ao enviar WhatsApp de atualização de status"
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao testar serviço de WhatsApp para atualização de status:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Erro ao testar serviço de WhatsApp: ${error}`,
         error: String(error)
       });
     }
