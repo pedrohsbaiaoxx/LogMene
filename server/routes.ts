@@ -448,6 +448,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao marcar todas notificações como lidas" });
     }
   });
+  
+  // Mark freight request as completed (company only)
+  app.patch("/api/company/requests/:id/complete", ensureCompany, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      if (isNaN(requestId)) {
+        return res.status(400).json({ message: "ID de solicitação inválido" });
+      }
+      
+      // Verificar se a solicitação existe
+      const request = await storage.getFreightRequestById(requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Solicitação não encontrada" });
+      }
+      
+      // Verificar se a solicitação está aceita (status "accepted")
+      if (request.status !== "accepted") {
+        return res.status(400).json({ message: "Apenas solicitações aceitas podem ser marcadas como concluídas" });
+      }
+      
+      // Verificar se tem comprovante de entrega
+      const proof = await storage.getDeliveryProofByRequestId(requestId);
+      if (!proof) {
+        return res.status(400).json({ message: "É necessário anexar um comprovante de entrega antes de concluir a solicitação" });
+      }
+      
+      // Atualizar o status para "completed"
+      const updatedRequest = await storage.updateFreightRequestStatus(requestId, "completed");
+      
+      // Notificar o cliente
+      await storage.createNotification({
+        userId: request.userId,
+        requestId: requestId,
+        type: "status_update",
+        message: "Seu frete foi marcado como concluído pela transportadora.",
+        read: false
+      });
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Erro ao concluir solicitação:", error);
+      res.status(500).json({ message: "Erro ao concluir a solicitação" });
+    }
+  });
 
   // API para gerenciamento de comprovantes de entrega
 
