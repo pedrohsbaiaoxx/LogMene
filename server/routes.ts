@@ -7,8 +7,11 @@ import {
   insertQuoteSchema, 
   insertUserSchema, 
   insertDeliveryProofSchema, 
-  insertNotificationSchema
+  insertNotificationSchema,
+  freightRequests
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendEmail } from "./services/email-service";
