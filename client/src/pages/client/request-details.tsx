@@ -36,6 +36,9 @@ export default function RequestDetailsPage() {
   const { data: request, isLoading } = useQuery<FreightRequestWithQuote>({
     queryKey: [`/api/requests/${requestId}`],
     enabled: requestId > 0,
+    onSuccess: (data) => {
+      console.log("Request data:", data);
+    }
   });
 
   // Update request status mutation
