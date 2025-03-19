@@ -39,7 +39,6 @@ export default function CreateQuotePage() {
   const params = useParams();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [calculatingDistance, setCalculatingDistance] = useState(false);
   
   const requestId = params.requestId ? parseInt(params.requestId) : 0;
   
@@ -59,67 +58,12 @@ export default function CreateQuotePage() {
     },
   });
   
-  // Calcular distância automaticamente quando os dados do pedido forem carregados
-  useEffect(() => {
-    if (request) {
-      calculateDistance();
-    }
-  }, [request]);
+  // Removido o cálculo automático de distância, a transportadora preencherá manualmente
 
   // Função para calcular a distância entre origem e destino
   const calculateDistance = async () => {
-    if (!request) return;
-    
-    setCalculatingDistance(true);
-    try {
-      // Preparar os endereços
-      const origem = `${request.originStreet}, ${request.originCity}, ${request.originState}`;
-      const destino = `${request.destinationStreet}, ${request.destinationCity}, ${request.destinationState}`;
-      
-      // Usar uma estimativa básica baseada em distância direta
-      // Para cada grau de diferença na latitude/longitude, adiciona aproximadamente 111 km
-      const origemParts = origem.split(",").map(p => p.trim());
-      const destinoParts = destino.split(",").map(p => p.trim());
-      
-      // Uma estimativa simples baseada nos nomes das cidades
-      const cidadeOrigem = request.originCity;
-      const estadoOrigem = request.originState;
-      const cidadeDestino = request.destinationCity;
-      const estadoDestino = request.destinationState;
-      
-      // Distância estimada (exemplo simples - numa aplicação real, usaria a API Google Maps)
-      let distanciaEstimada = 0;
-      
-      // Se for no mesmo estado
-      if (estadoOrigem === estadoDestino) {
-        // Se for na mesma cidade
-        if (cidadeOrigem === cidadeDestino) {
-          distanciaEstimada = 15; // Distância local estimada
-        } else {
-          // Distância entre cidades do mesmo estado
-          distanciaEstimada = 150; // Valor médio para exemplo
-        }
-      } else {
-        // Distância entre estados
-        distanciaEstimada = 500; // Valor médio para exemplo
-      }
-      
-      // Adicionar alguma variação para parecer mais realista
-      const variacao = Math.floor(Math.random() * 50) + 1;
-      distanciaEstimada += variacao;
-      
-      // Atualizar o formulário com a distância calculada
-      form.setValue("distanceKm", distanciaEstimada);
-    } catch (error) {
-      console.error("Erro ao calcular distância:", error);
-      toast({
-        title: "Erro ao calcular distância",
-        description: "Não foi possível calcular a distância. Por favor, preencha manualmente.",
-        variant: "destructive",
-      });
-    } finally {
-      setCalculatingDistance(false);
-    }
+    // Esta função agora apenas prepara o campo, a transportadora preencherá o valor manualmente
+    setCalculatingDistance(false);
   };
 
   // Create quote mutation

@@ -242,7 +242,7 @@ export default function RequestDetailsPage() {
             {request.status === "quoted" && request.quote && (
               <div className="mb-6 p-4 bg-[#2196F3]/5 rounded-lg border border-[#2196F3]/30">
                 <h3 className="text-lg font-medium text-neutral-700 mb-3">Cotação</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-neutral-500">Valor</p>
                     <p className="font-medium text-neutral-700">{formatCurrency(request.quote.value)}</p>
@@ -251,6 +251,14 @@ export default function RequestDetailsPage() {
                     <p className="text-sm text-neutral-500">Prazo Estimado</p>
                     <p className="font-medium text-neutral-700">{request.quote.estimatedDays} dias</p>
                   </div>
+                  {request.quote.distanceKm && (
+                    <div>
+                      <p className="text-sm text-neutral-500">Distância</p>
+                      <p className="font-medium text-neutral-700">
+                        {request.quote.distanceKm.toLocaleString('pt-BR')} km
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-neutral-500">Cotado em</p>
                     <p className="font-medium text-neutral-700">
@@ -286,7 +294,7 @@ export default function RequestDetailsPage() {
             {request.status === "accepted" && request.quote && (
               <div className="mb-6 p-4 bg-[#4CAF50]/5 rounded-lg border border-[#4CAF50]/30">
                 <h3 className="text-lg font-medium text-neutral-700 mb-3">Frete Confirmado</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-neutral-500">Valor</p>
                     <p className="font-medium text-neutral-700">{formatCurrency(request.quote.value)}</p>
@@ -295,6 +303,14 @@ export default function RequestDetailsPage() {
                     <p className="text-sm text-neutral-500">Prazo Estimado</p>
                     <p className="font-medium text-neutral-700">{request.quote.estimatedDays} dias</p>
                   </div>
+                  {request.quote.distanceKm && (
+                    <div>
+                      <p className="text-sm text-neutral-500">Distância</p>
+                      <p className="font-medium text-neutral-700">
+                        {request.quote.distanceKm.toLocaleString('pt-BR')} km
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-neutral-500">Entrega estimada até</p>
                     <p className="font-medium text-neutral-700">
