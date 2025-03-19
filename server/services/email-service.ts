@@ -131,7 +131,7 @@ export function createNotificationEmail(
     <div class="content">
       <p>${template.intro}</p>
       <p>${message}</p>
-      <a href="https://logmene.replit.app" class="button">Acessar Sistema</a>
+      <p>Por favor, acesse o sistema para visualizar mais detalhes e tomar as ações necessárias.</p>
       <p>Se você tiver dúvidas, entre em contato com nossa equipe de suporte.</p>
     </div>
     <div class="footer">
