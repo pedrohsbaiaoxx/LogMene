@@ -45,9 +45,6 @@ export default function ClientHomePage() {
     completedRequests: completedRequests?.length || 0,
   };
   
-  // Get recent requests (up to 5)
-  const recentRequests = requests.slice(0, 5);
-  
   // Colunas para desktop
   const requestColumns: ColumnDef<FreightRequestWithQuote>[] = [
     {
@@ -218,10 +215,10 @@ export default function ClientHomePage() {
           )}
         </div>
         
-        {/* Recent Requests Section */}
-        <Card>
+        {/* Solicitações Pendentes */}
+        <Card className="mb-6">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-neutral-700">Solicitações Recentes</CardTitle>
+            <CardTitle className="text-lg font-medium text-neutral-700">Solicitações Pendentes</CardTitle>
           </CardHeader>
           
           <>
@@ -229,8 +226,8 @@ export default function ClientHomePage() {
             <CardContent className="p-0 hidden md:block">
               <DataTable 
                 columns={requestColumns}
-                data={recentRequests}
-                isLoading={isLoading}
+                data={pendingRequests || []}
+                isLoading={isPendingLoading}
               />
             </CardContent>
 
@@ -238,10 +235,49 @@ export default function ClientHomePage() {
             <CardContent className="p-0 md:hidden">
               <DataTable 
                 columns={mobileRequestColumns}
-                data={recentRequests}
-                isLoading={isLoading}
+                data={pendingRequests || []}
+                isLoading={isPendingLoading}
               />
             </CardContent>
+            
+            {!isPendingLoading && pendingRequests?.length === 0 && (
+              <div className="p-6 text-center text-muted-foreground">
+                Não há solicitações pendentes.
+              </div>
+            )}
+          </>
+        </Card>
+        
+        {/* Solicitações Concluídas */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-neutral-700">Solicitações Concluídas</CardTitle>
+          </CardHeader>
+          
+          <>
+            {/* Desktop Table */}
+            <CardContent className="p-0 hidden md:block">
+              <DataTable 
+                columns={requestColumns}
+                data={completedRequests || []}
+                isLoading={isCompletedLoading}
+              />
+            </CardContent>
+
+            {/* Mobile Table */}
+            <CardContent className="p-0 md:hidden">
+              <DataTable 
+                columns={mobileRequestColumns}
+                data={completedRequests || []}
+                isLoading={isCompletedLoading}
+              />
+            </CardContent>
+            
+            {!isCompletedLoading && completedRequests?.length === 0 && (
+              <div className="p-6 text-center text-muted-foreground">
+                Não há solicitações concluídas.
+              </div>
+            )}
             
             {!isLoading && (
               <div className="p-4 border-t border-neutral-200">
