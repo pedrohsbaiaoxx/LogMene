@@ -7,8 +7,8 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER;
 
 // Modo de simulação (útil para desenvolvimento e testes)
-// Definindo como true para garantir que as mensagens não sejam enviadas realmente durante o desenvolvimento
-const SIMULATION_MODE = true; // Forçando modo de simulação para segurança
+// Configurando para modo de produção para permitir envio real de mensagens
+const SIMULATION_MODE = false; // Modo de produção ativado
 
 // Log de inicialização para verificar as configurações
 log(`Serviço WhatsApp inicializado. Modo de simulação: ${SIMULATION_MODE ? 'ATIVADO' : 'DESATIVADO'}`, 'twilio-whatsapp-init');
@@ -23,7 +23,8 @@ log(`Valor da variável de ambiente WHATSAPP_SIMULATION_MODE: "${process.env.WHA
  */
 export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
   // Log das credenciais (parcialmente ofuscadas para segurança)
-  log(`TWILIO_ACCOUNT_SID: ${accountSid ? accountSid.substring(0, 4) + '...' : 'não definido'}`, 'twilio-whatsapp');
+  log(`MODO DE PRODUÇÃO ATIVO - Preparando para enviar mensagem real via WhatsApp`, 'twilio-whatsapp');
+  log(`TWILIO_ACCOUNT_SID: ${accountSid ? accountSid.substring(0, 4) + '...' + accountSid.substring(accountSid.length - 4) : 'não definido'}`, 'twilio-whatsapp');
   log(`TWILIO_AUTH_TOKEN existe: ${!!authToken}`, 'twilio-whatsapp');
   log(`TWILIO_WHATSAPP_NUMBER: ${twilioWhatsappNumber}`, 'twilio-whatsapp');
   
@@ -39,6 +40,7 @@ export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
   // Verifica se as credenciais do Twilio estão configuradas
   if (!accountSid || !authToken || !twilioWhatsappNumber) {
     log('Credenciais do Twilio não configuradas para WhatsApp', 'twilio-whatsapp');
+    log('Verifique as variáveis de ambiente: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER', 'twilio-whatsapp');
     return false;
   }
   
@@ -46,11 +48,15 @@ export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
     // Inicializa o cliente do Twilio
     const client = twilio(accountSid, authToken);
     
-    log(`Enviando WhatsApp via Twilio para: ${formattedNumber}`, 'twilio-whatsapp');
+    log(`ENVIANDO WHATSAPP EM MODO DE PRODUÇÃO para: ${formattedNumber}`, 'twilio-whatsapp');
+    log(`Mensagem: "${body}"`, 'twilio-whatsapp');
     
     // WhatsApp requer o prefixo 'whatsapp:' nos números
     const from = `whatsapp:${twilioWhatsappNumber}`;
     const to = `whatsapp:${formattedNumber}`;
+    
+    log(`Número de origem formatado: ${from}`, 'twilio-whatsapp');
+    log(`Número de destino formatado: ${to}`, 'twilio-whatsapp');
     
     // Envia a mensagem
     const message = await client.messages.create({
@@ -59,10 +65,14 @@ export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
       to
     });
 
-    log(`WhatsApp enviado com sucesso via Twilio. SID: ${message.sid}`, 'twilio-whatsapp');
+    log(`WhatsApp enviado com SUCESSO em MODO DE PRODUÇÃO!`, 'twilio-whatsapp');
+    log(`SID da mensagem: ${message.sid}`, 'twilio-whatsapp');
+    log(`Status da mensagem: ${message.status}`, 'twilio-whatsapp');
+    log(`Direção da mensagem: ${message.direction}`, 'twilio-whatsapp');
+    
     return true;
   } catch (error) {
-    log(`Erro ao enviar WhatsApp via Twilio: ${error}`, 'twilio-whatsapp');
+    log(`ERRO CRÍTICO ao enviar WhatsApp via Twilio: ${error}`, 'twilio-whatsapp');
     
     if (error instanceof Error) {
       log(`Detalhes do erro: ${error.message}`, 'twilio-whatsapp');
@@ -73,8 +83,14 @@ export async function sendWhatsApp(to: string, body: string): Promise<boolean> {
       if (twilioError.code) {
         log(`Código de erro Twilio: ${twilioError.code}`, 'twilio-whatsapp');
       }
+      if (twilioError.status) {
+        log(`Status HTTP: ${twilioError.status}`, 'twilio-whatsapp');
+      }
       if (twilioError.moreInfo) {
         log(`Mais informações: ${twilioError.moreInfo}`, 'twilio-whatsapp');
+      }
+      if (twilioError.details) {
+        log(`Detalhes adicionais: ${JSON.stringify(twilioError.details)}`, 'twilio-whatsapp');
       }
     }
     
@@ -104,6 +120,21 @@ function formatPhoneNumber(phone: string): string {
   // Se o número não tiver o código do país (55 para Brasil)
   if (!cleaned.startsWith('55')) {
     cleaned = '55' + cleaned;
+  }
+  
+  // Remover o 9 adicional para números de celular brasileiros
+  // (alguns sistemas inserem o 9 mas o Twilio já lida com isso)
+  if (cleaned.startsWith('55') && cleaned.length > 12) {
+    // Se for um número de celular brasileiro com o 9 adicional
+    // O padrão é: 55 + DDD (2 dígitos) + 9 + número (8 dígitos)
+    const ddd = cleaned.substring(2, 4);
+    const hasExtra9 = cleaned.substring(4, 5) === '9' && cleaned.length === 13;
+    
+    if (hasExtra9) {
+      // Manter o formato internacional + DDD + número sem o 9 adicional
+      // cleaned = '55' + ddd + cleaned.substring(5);
+      // Na verdade, vamos manter o 9 pois o Twilio espera o formato completo para o Brasil
+    }
   }
   
   log(`Número formatado para WhatsApp: ${phone} -> ${cleaned}`, 'twilio-whatsapp');

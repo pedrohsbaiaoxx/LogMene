@@ -26,6 +26,12 @@ export default function TestNotificationPage() {
     sendWhatsApp: false
   });
   
+  // Formulário para teste direto de WhatsApp
+  const [whatsappForm, setWhatsappForm] = useState({
+    phoneNumber: "+5535999220624",
+    message: "Teste de mensagem WhatsApp do sistema LogMene em modo de produção."
+  });
+  
   // Formulário para teste de email
   const [emailForm, setEmailForm] = useState({
     email: user?.email || "teste@example.com"
@@ -130,6 +136,46 @@ export default function TestNotificationPage() {
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao testar o mecanismo de fallback. Verifique o console para mais detalhes.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleWhatsAppSubmit = async () => {
+    setLoading(true);
+    setResult(null);
+    
+    try {
+      const response = await fetch('/api/test/whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(whatsappForm)
+      });
+      
+      const data = await response.json();
+      setResult(data);
+      
+      if (response.ok) {
+        toast({
+          title: "WhatsApp enviado",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Erro ao enviar WhatsApp",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao testar WhatsApp:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao testar o envio de WhatsApp. Verifique o console para mais detalhes.",
         variant: "destructive",
       });
     } finally {
@@ -263,6 +309,52 @@ export default function TestNotificationPage() {
               variant="outline"
             >
               {loading ? "Testando..." : "Testar Fallback"}
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Teste de WhatsApp */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Teste de WhatsApp em Produção</CardTitle>
+            <CardDescription>
+              <span className="text-red-500 font-bold">ATENÇÃO:</span> Enviar uma mensagem real via WhatsApp (Twilio)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Número de Telefone (formato internacional com +)</Label>
+              <Input 
+                id="phoneNumber" 
+                type="text" 
+                value={whatsappForm.phoneNumber}
+                onChange={(e) => setWhatsappForm({
+                  ...whatsappForm,
+                  phoneNumber: e.target.value
+                })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="whatsappMessage">Mensagem</Label>
+              <Textarea 
+                id="whatsappMessage" 
+                value={whatsappForm.message}
+                onChange={(e) => setWhatsappForm({
+                  ...whatsappForm,
+                  message: e.target.value
+                })}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleWhatsAppSubmit} 
+              disabled={loading}
+              variant="destructive"
+              className="w-full"
+            >
+              {loading ? "Enviando..." : "ENVIAR WHATSAPP EM PRODUÇÃO"}
             </Button>
           </CardFooter>
         </Card>
