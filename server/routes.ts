@@ -1228,9 +1228,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`==== TESTE DIRETO MAILERSEND ====`);
       console.log(`Email: ${email}`);
       
-      const MailerSend = await import('@mailersend/mailersend');
-      const { Sender, Recipient, EmailParams } = MailerSend;
-      
       if (!process.env.MAILERSEND_API_KEY) {
         return res.status(500).json({ 
           success: false, 
@@ -1238,33 +1235,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const mailerSend = new MailerSend.default({
-        apiKey: process.env.MAILERSEND_API_KEY,
-      });
+      // Usando o approach de API direta via axios
       
       // Mostrar chave parcial (apenas primeiros e últimos caracteres)
       const apiKey = process.env.MAILERSEND_API_KEY;
       const maskedKey = apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4);
       console.log(`Usando chave API: ${maskedKey}`);
       
-      const sender = new Sender('no-reply@mailersend.net', 'LogMene Teste Direto');
-      console.log(`Remetente: ${sender.email}, ${sender.name}`);
+      // Dados da requisição
+      const apiUrl = 'https://api.mailersend.com/v1/email';
+      const requestData = {
+        from: {
+          email: 'no-reply@mailersend.net', // Email que não requer validação de domínio
+          name: 'LogMene Teste Direto'
+        },
+        to: [{ email }],
+        subject: 'Teste Direto MailerSend',
+        text: 'Este é um teste direto do serviço MailerSend. Hora: ' + new Date().toISOString(),
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Teste Direto API</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um teste direto da <strong>API do MailerSend</strong>.</p>
+              <p>Email enviado para: <strong>${email}</strong></p>
+              <p>Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene</p>
+            </div>
+          </div>
+        `
+      };
       
-      const recipients = [new Recipient(email)];
-      console.log(`Destinatário: ${email}`);
-      
-      // Email muito simples para facilitar depuração
-      const emailParams = new EmailParams()
-        .setFrom(sender)
-        .setTo(recipients)
-        .setSubject('Teste Direto MailerSend')
-        .setText('Este é um teste direto do serviço MailerSend. Hora: ' + new Date().toISOString());
-      
-      console.log('Enviando email de teste...');
+      console.log('Enviando email de teste via API direta...');
       
       try {
-        const response = await mailerSend.email.send(emailParams);
-        console.log('Resposta do MailerSend:', response);
+        const response = await axios.post(apiUrl, requestData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          }
+        });
+        
+        console.log('Resposta do MailerSend:', response.data);
         
         return res.json({
           success: true,
