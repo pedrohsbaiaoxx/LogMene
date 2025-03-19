@@ -114,7 +114,7 @@ export default function ClientRequestsPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-bold">
+          <h1 className="text-xl font-bold text-foreground">
             Solicitações de {client.fullName}
           </h1>
         </div>
@@ -210,7 +210,7 @@ export default function ClientRequestsPage() {
                         
                         {request.quote && (
                           <div className="mt-3 p-3 bg-primary/10 rounded-md">
-                            <p className="text-sm font-medium mb-1 text-primary-foreground">
+                            <p className="text-sm font-medium mb-1 text-primary">
                               Cotação: R$ {request.quote.value.toFixed(2)}
                             </p>
                             <p className="text-xs text-muted-foreground">

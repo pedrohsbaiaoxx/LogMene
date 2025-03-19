@@ -14,7 +14,8 @@ import {
   PhoneIcon,
   TrashIcon,
   Loader2Icon,
-  AlertTriangleIcon
+  AlertTriangleIcon,
+  FileTextIcon
 } from "lucide-react";
 import {
   Card,
@@ -155,7 +156,7 @@ export default function ClientsPage() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="flex justify-between border-t bg-muted/10 pt-4">
+                  <CardFooter className="flex flex-wrap gap-2 justify-between border-t bg-muted/10 pt-4">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -163,6 +164,17 @@ export default function ClientsPage() {
                     >
                       Ver Solicitações
                     </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      className="bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+                      size="sm"
+                      onClick={() => window.open(`/api/report/client/${client.id}`, '_blank')}
+                    >
+                      <FileTextIcon className="h-4 w-4 mr-1" />
+                      Gerar Relatório
+                    </Button>
+                    
                     <Button 
                       variant="outline" 
                       size="sm"
