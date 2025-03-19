@@ -26,6 +26,48 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Rota temporária para testar email (remover após teste)
+  app.get("/api/test/email", async (req, res) => {
+    try {
+      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
+      
+      console.log(`Iniciando teste de email para: ${testEmail}`);
+      
+      const result = await sendEmail({
+        to: testEmail,
+        from: "LogMene <noreply@logmene.com>",
+        subject: "Teste do Serviço de Email - LogMene",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2E3192; color: white; padding: 10px 20px; border-radius: 4px 4px 0 0;">
+              <h2>LogMene - Sistema de Logística</h2>
+            </div>
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 0 0 4px 4px;">
+              <p>Este é um email de teste do sistema LogMene.</p>
+              <p>Se você está recebendo este email, o serviço de email está funcionando corretamente!</p>
+              <p>Data e hora do teste: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+              <p>Este é um email automático de teste, por favor não responda.</p>
+              <p>&copy; ${new Date().getFullYear()} LogMene. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (result) {
+        console.log(`Email de teste enviado com sucesso para: ${testEmail}`);
+        res.json({ success: true, message: `Email de teste enviado com sucesso para ${testEmail}` });
+      } else {
+        console.error(`Falha ao enviar email de teste para: ${testEmail}`);
+        res.status(500).json({ success: false, message: "Falha ao enviar email de teste" });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email de teste:", error);
+      res.status(500).json({ success: false, message: `Erro ao enviar email: ${error}` });
+    }
+  });
 
   // Error handler for Zod validation errors
   const handleZodError = (error: unknown, res: Response) => {

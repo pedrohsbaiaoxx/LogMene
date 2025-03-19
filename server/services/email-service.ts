@@ -2,22 +2,34 @@ import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
 // Configuração do transportador de email usando Gmail
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  },
-  tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  },
-  logger: true,
-  debug: true
-});
+function createTransporter() {
+  // Verificar se o email e senha estão configurados
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    log('EMAIL_USER ou EMAIL_PASSWORD não configurados', 'email-service');
+    return null;
+  }
+
+  // Criar transportador com configurações para Gmail
+  log(`Configurando transportador para ${process.env.EMAIL_USER}`, 'email-service');
+  return nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    logger: true,
+    debug: true
+  });
+}
+
+// Criar transportador sob demanda
+const transporter = createTransporter();
 
 interface EmailParams {
   to: string;
@@ -31,18 +43,30 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   // Se não tiver configurado o email e senha, apenas loga e retorna como enviado
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
     log(`[Email simulado] Para: ${params.to}, Assunto: ${params.subject}`, 'email-service');
-    log(`[Email simulado] Conteúdo: ${params.text || params.html}`, 'email-service');
+    log(`[Email simulado] Conteúdo: ${params.text || params.html?.substring(0, 100)}...`, 'email-service');
+    
+    log(`AVISO: Variáveis de ambiente EMAIL_USER e/ou EMAIL_PASSWORD não configuradas.`, 'email-service');
+    log(`Para usar o serviço de email, configure essas variáveis com credenciais válidas.`, 'email-service');
+    
+    // Em ambiente de desenvolvimento, simulamos o envio e retornamos sucesso
     return true;
+  }
+  
+  // Verificar se temos um transportador válido
+  if (!transporter) {
+    log(`ERRO: Transportador de email não configurado corretamente.`, 'email-service');
+    log(`Verifique se EMAIL_USER e EMAIL_PASSWORD estão configurados corretamente.`, 'email-service');
+    return false;
   }
 
   try {
     // Atualizamos o remetente para usar o email configurado
     const from = process.env.EMAIL_USER;
     
-    log(`Tentando enviar email de ${from} para ${params.to}. Credenciais configuradas: Sim`, 'email-service');
+    log(`Tentando enviar email de ${from} para ${params.to}`, 'email-service');
     
-    // Enviando email usando nodemailer
-    const info = await transporter.sendMail({
+    // Enviando email usando nodemailer - garantimos acima que transporter não é null
+    const info = await (transporter as any).sendMail({
       from: from,
       to: params.to,
       subject: params.subject,
@@ -58,9 +82,38 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     // Log detalhado do erro para melhor depuração
     if (error instanceof Error) {
       log(`Erro ao enviar email: ${error.message}`, 'email-service');
+      
+      // Log para erros específicos
       if ('code' in error) {
-        log(`Código de erro: ${(error as any).code}`, 'email-service');
+        const errorCode = (error as any).code;
+        log(`Código de erro: ${errorCode}`, 'email-service');
+        
+        // Instruções baseadas no código de erro
+        if (errorCode === 'EAUTH') {
+          log(`
+PROBLEMA DE AUTENTICAÇÃO DETECTADO!
+----------------------------------
+O Gmail está recusando a autenticação. Causas possíveis:
+1. Senha incorreta
+2. Configurações de segurança do Gmail bloqueando o acesso
+3. Verificação em duas etapas ativada sem senha de app configurada
+
+SOLUÇÕES:
+A) Crie uma "Senha de App" no Gmail se você usa verificação em duas etapas:
+   - Acesse https://myaccount.google.com/security
+   - Em "Verificação em duas etapas", clique em "Senhas de app"
+   - Selecione "App: Outro (nome personalizado)" e use "LogMene"
+   - Use a senha gerada como EMAIL_PASSWORD
+
+B) Ou ative "Acesso a apps menos seguros" (não recomendado, mas funciona para testes):
+   - Acesse https://myaccount.google.com/security
+   - Procure por "Acesso a app menos seguro" e ative
+`, 'email-service');
+        } else if (errorCode === 'ESOCKET') {
+          log('Erro de conexão com o servidor SMTP. Verifique sua conexão com a internet.', 'email-service');
+        }
       }
+      
       if ('command' in error) {
         log(`Comando que falhou: ${(error as any).command}`, 'email-service');
       }
