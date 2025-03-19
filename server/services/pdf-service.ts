@@ -51,7 +51,7 @@ export async function generateClientFreightReport(
   
   // Preparar os dados para a tabela
   const tableBody = [
-    ['ID', 'Status', 'Origem', 'Destino', 'Data Envio', 'Data Entrega', 'Valor (R$)', 'Data Conclusão'],
+    ['ID', 'Status', 'Origem', 'Destino', 'Data Envio', 'Data Entrega', 'Distância (km)', 'Valor (R$)', 'Data Conclusão'],
     ...filteredRequests.map(request => [
       request.id.toString(),
       translateStatus(request.status),
@@ -59,6 +59,7 @@ export async function generateClientFreightReport(
       `${request.destinationCity}/${request.destinationState}`,
       formatISODateToDisplay(request.pickupDate),
       formatISODateToDisplay(request.deliveryDate),
+      request.quote?.distanceKm ? request.quote.distanceKm.toLocaleString('pt-BR') : '-',
       (request.quote?.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
       request.completedAt ? formatISODateToDisplay(request.completedAt instanceof Date 
         ? request.completedAt.toISOString() 
@@ -77,7 +78,7 @@ export async function generateClientFreightReport(
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', '*', '*', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', '*', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: tableBody
         }
       },

@@ -58,13 +58,7 @@ export default function CreateQuotePage() {
     },
   });
   
-  // Removido o cálculo automático de distância, a transportadora preencherá manualmente
-
-  // Função para calcular a distância entre origem e destino
-  const calculateDistance = async () => {
-    // Esta função agora apenas prepara o campo, a transportadora preencherá o valor manualmente
-    setCalculatingDistance(false);
-  };
+  // A transportadora preencherá manualmente a distância em KM
 
   // Create quote mutation
   const createQuoteMutation = useMutation({
@@ -314,24 +308,16 @@ export default function CreateQuotePage() {
                       <FormItem>
                         <FormLabel>Distância (km)</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              step="1"
-                              disabled={calculatingDistance}
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
-                                field.onChange(value);
-                              }}
-                            />
-                            {calculatingDistance && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div className="animate-spin h-4 w-4 border-2 border-primary rounded-full border-t-transparent"></div>
-                              </div>
-                            )}
-                          </div>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            step="1"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                              field.onChange(value);
+                            }}
+                          />
                         </FormControl>
                         <FormDescription>
                           Distância total estimada entre origem e destino
