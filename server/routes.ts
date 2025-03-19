@@ -131,6 +131,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Rota para testar o email de nova solicitação de frete via Brevo
+  app.get("/api/test/freight-request-email", async (req, res) => {
+    try {
+      const testEmail = req.query.email as string || "pedroxxsb@gmail.com";
+      const companyName = req.query.name as string || "Empresa Teste";
+      
+      console.log(`Iniciando teste de email de nova solicitação para: ${testEmail}`);
+      
+      // Simulando detalhes de uma solicitação de frete
+      const freightDetails = `
+        <ul>
+          <li><strong>Origem:</strong> São Paulo, SP</li>
+          <li><strong>Destino:</strong> Rio de Janeiro, RJ</li>
+          <li><strong>Tipo de carga:</strong> Carga Geral</li>
+          <li><strong>Peso:</strong> 500 kg</li>
+          <li><strong>Volume:</strong> 2 m³</li>
+          <li><strong>Valor da Nota Fiscal:</strong> R$ 5.000,00</li>
+          <li><strong>Data de Coleta:</strong> 25/03/2025</li>
+          <li><strong>Data de Entrega:</strong> 27/03/2025</li>
+        </ul>
+      `;
+      
+      // Usando a função específica para novas solicitações via Brevo
+      const result = await sendNewFreightRequestBrevoEmail(
+        testEmail,
+        companyName,
+        12345, // ID fictício da solicitação
+        "Cliente Teste", // Nome fictício do cliente
+        freightDetails
+      );
+      
+      if (result) {
+        console.log(`Email de nova solicitação enviado com sucesso para: ${testEmail}`);
+        res.json({ 
+          success: true, 
+          message: `Email de nova solicitação enviado com sucesso para ${testEmail}` 
+        });
+      } else {
+        console.error(`Falha ao enviar email de nova solicitação para: ${testEmail}`);
+        res.status(500).json({ 
+          success: false, 
+          message: "Falha ao enviar email de nova solicitação" 
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email de nova solicitação:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Falha ao enviar email de nova solicitação",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Error handler for Zod validation errors
   const handleZodError = (error: unknown, res: Response) => {

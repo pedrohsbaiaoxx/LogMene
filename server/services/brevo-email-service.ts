@@ -109,6 +109,9 @@ export async function sendNewFreightRequestEmail(
   return await sendEmail(emailParams);
 }
 
+// Alias para a função acima, mantendo compatibilidade com o nome usado em routes.ts
+export const sendNewFreightRequestBrevoEmail = sendNewFreightRequestEmail;
+
 /**
  * Cria o conteúdo do email de notificação com base no tipo
  */
