@@ -14,9 +14,27 @@ import { ColumnDef } from "@tanstack/react-table";
 export default function RequestsPage() {
   const [, navigate] = useLocation();
   
-  const { data: requests, isLoading } = useQuery<FreightRequestWithQuote[]>({
-    queryKey: ["/api/requests"],
+  const { data: pendingRequests, isLoading: isPendingLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/pending-requests"],
   });
+  
+  const { data: activeRequests, isLoading: isActiveLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/active-requests"],
+  });
+  
+  const { data: completedRequests, isLoading: isCompletedLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/completed-requests"],
+  });
+  
+  // Combinando todos os fretes para a lista geral
+  const requests = [
+    ...(pendingRequests || []),
+    ...(activeRequests || []),
+    ...(completedRequests || []),
+  ];
+  
+  // Verificar se todos os dados estão carregando
+  const isLoading = isPendingLoading || isActiveLoading || isCompletedLoading;
   
   // Colunas para desktop
   const requestColumns: ColumnDef<FreightRequestWithQuote>[] = [
@@ -32,10 +50,10 @@ export default function RequestsPage() {
         const request = row.original;
         return (
           <div>
-            <div>{request.origin}</div>
+            <div>{request.originCity}</div>
             <div className="text-xs text-neutral-500 flex items-center">
               <ArrowDown className="h-3 w-3 mr-1" />
-              <span>{request.destination}</span>
+              <span>{request.destinationCity}</span>
             </div>
           </div>
         );
@@ -92,10 +110,10 @@ export default function RequestsPage() {
         const request = row.original;
         return (
           <div>
-            <div className="font-medium">{request.origin}</div>
+            <div className="font-medium">{request.originCity}</div>
             <div className="text-xs text-neutral-500 flex items-center">
               <ArrowDown className="h-3 w-3 mr-1" />
-              <span>{request.destination}</span>
+              <span>{request.destinationCity}</span>
             </div>
           </div>
         );
