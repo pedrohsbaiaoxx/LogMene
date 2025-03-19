@@ -1,12 +1,16 @@
-import Brevo from '@getbrevo/brevo';
+import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
-// Configuração do cliente Brevo
-const client = Brevo.ApiClient.instance;
-const apiKey = client.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY || '';
-
-const emailApi = new Brevo.TransactionalEmailsApi();
+// Configuração do transportador de email
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false, // true para 465, false para outras portas
+  auth: {
+    user: 'noreply@logmene.com', // ou outro email que você quiser usar como remetente
+    pass: process.env.BREVO_API_KEY || ''
+  }
+});
 
 interface EmailParams {
   to: string;
@@ -25,14 +29,16 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 
   try {
-    await client.sendEmail({
-      sender: { email: params.from },
-      to: [{ email: params.to }],
+    // Enviando email usando nodemailer
+    const info = await transporter.sendMail({
+      from: params.from,
+      to: params.to,
       subject: params.subject,
-      htmlContent: params.html || '',
-      textContent: params.text || ''
+      text: params.text || '',
+      html: params.html || '',
     });
-    log(`Email enviado para ${params.to}`, 'email-service');
+    
+    log(`Email enviado para ${params.to}. ID da mensagem: ${info.messageId}`, 'email-service');
     return true;
   } catch (error) {
     console.error('Brevo email error:', error);
