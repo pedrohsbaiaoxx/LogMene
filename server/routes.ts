@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { 
   insertFreightRequestSchema, 
   insertQuoteSchema, 
@@ -340,41 +340,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Dados validados:", { ...userData, password: '***' });
         
         try {
-          // Hash the password using the auth helper
-          const { hashPassword } = require("./auth");
+          // Usamos o hashPassword importado no topo do arquivo
+          const hashedPassword = await hashPassword(userData.password);
+          console.log("Senha hash gerada com sucesso");
           
           try {
-            const hashedPassword = await hashPassword(userData.password);
-            console.log("Senha hash gerada com sucesso");
+            const user = await storage.createUser({
+              ...userData,
+              password: hashedPassword,
+            });
             
-            try {
-              const user = await storage.createUser({
-                ...userData,
-                password: hashedPassword,
-              });
-              
-              console.log("Usuário criado com sucesso:", { id: user.id, username: user.username });
+            console.log("Usuário criado com sucesso:", { id: user.id, username: user.username });
 
-              // Remove password from response
-              const { password, ...userWithoutPassword } = user;
-              res.status(201).json(userWithoutPassword);
-            } catch (createUserError) {
-              console.error("Erro ao criar usuário no storage:", createUserError);
-              res.status(500).json({ message: `Erro ao criar usuário: ${createUserError.message}` });
-            }
-          } catch (hashError) {
-            console.error("Erro ao fazer hash da senha:", hashError);
-            res.status(500).json({ message: `Erro ao processar senha: ${hashError.message}` });
+            // Remove password from response
+            const { password, ...userWithoutPassword } = user;
+            res.status(201).json(userWithoutPassword);
+          } catch (error: any) {
+            console.error("Erro ao criar usuário no storage:", error);
+            res.status(500).json({ message: `Erro ao criar usuário: ${error.message}` });
           }
-        } catch (importError) {
-          console.error("Erro ao importar hashPassword:", importError);
-          res.status(500).json({ message: `Erro interno: ${importError.message}` });
+        } catch (error: any) {
+          console.error("Erro ao fazer hash da senha:", error);
+          res.status(500).json({ message: `Erro ao processar senha: ${error.message}` });
         }
-      } catch (zodError) {
-        console.error("Erro de validação:", zodError);
-        handleZodError(zodError, res);
+      } catch (error) {
+        console.error("Erro de validação:", error);
+        handleZodError(error, res);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro geral na criação do cliente:", error);
       res.status(500).json({ message: `Erro interno do servidor: ${error.message}` });
     }
