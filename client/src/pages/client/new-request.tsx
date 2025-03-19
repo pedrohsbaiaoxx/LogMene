@@ -53,8 +53,12 @@ export default function NewRequestPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      origin: "",
-      destination: "",
+      originStreet: "",
+      originCity: "",
+      originState: "",
+      destinationStreet: "",
+      destinationCity: "",
+      destinationState: "",
       cargoType: "",
       weight: undefined, // Mudado de 0 para undefined para evitar valores iniciais
       volume: undefined, // Mudado de 0 para undefined para evitar valores iniciais
@@ -124,32 +128,18 @@ export default function NewRequestPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Origin and Destination */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="origin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Origem</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Cidade, Estado" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="grid grid-cols-1 gap-6">
+                  <AddressInput 
+                    form={form}
+                    fieldPrefix="origin"
+                    label="Origem"
+                    description="Endereço de origem da carga"
                   />
-                  <FormField
-                    control={form.control}
-                    name="destination"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destino</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Cidade, Estado" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <AddressInput 
+                    form={form}
+                    fieldPrefix="destination"
+                    label="Destino"
+                    description="Endereço de destino da carga"
                   />
                 </div>
                 
