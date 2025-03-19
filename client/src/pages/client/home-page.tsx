@@ -14,20 +14,39 @@ import { ColumnDef } from "@tanstack/react-table";
 export default function ClientHomePage() {
   const [, navigate] = useLocation();
   
-  const { data: requests, isLoading } = useQuery<FreightRequestWithQuote[]>({
-    queryKey: ["/api/requests"],
+  const { data: pendingRequests, isLoading: isPendingLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/pending-requests"],
   });
   
+  const { data: activeRequests, isLoading: isActiveLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/active-requests"],
+  });
+  
+  const { data: completedRequests, isLoading: isCompletedLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/completed-requests"],
+  });
+  
+  // Combinando todos os fretes para a lista geral
+  const requests = [
+    ...(pendingRequests || []),
+    ...(activeRequests || []),
+    ...(completedRequests || []),
+  ];
+  
+  // Verificar se todos os dados estão carregando
+  const isLoading = isPendingLoading || isActiveLoading || isCompletedLoading;
+
   // Calculate statistics
   const stats = {
-    totalRequests: requests?.length || 0,
-    pendingRequests: requests?.filter(req => req.status === "pending").length || 0,
-    quotedRequests: requests?.filter(req => req.status === "quoted").length || 0,
-    completedRequests: requests?.filter(req => req.status === "completed").length || 0,
+    totalRequests: requests.length,
+    pendingRequests: pendingRequests?.filter(req => req.status === "pending").length || 0,
+    quotedRequests: pendingRequests?.filter(req => req.status === "quoted").length || 0,
+    activeRequests: activeRequests?.length || 0,
+    completedRequests: completedRequests?.length || 0,
   };
   
   // Get recent requests (up to 5)
-  const recentRequests = requests?.slice(0, 5) || [];
+  const recentRequests = requests.slice(0, 5);
   
   // Colunas para desktop
   const requestColumns: ColumnDef<FreightRequestWithQuote>[] = [
@@ -43,10 +62,10 @@ export default function ClientHomePage() {
         const request = row.original;
         return (
           <div>
-            <div>{request.origin}</div>
+            <div>{request.originCity}</div>
             <div className="text-xs text-neutral-500 flex items-center">
               <ArrowDown className="h-3 w-3 mr-1" />
-              <span>{request.destination}</span>
+              <span>{request.destinationCity}</span>
             </div>
           </div>
         );
@@ -103,10 +122,10 @@ export default function ClientHomePage() {
         const request = row.original;
         return (
           <div>
-            <div className="font-medium">{request.origin}</div>
+            <div className="font-medium">{request.originCity}</div>
             <div className="text-xs text-neutral-500 flex items-center">
               <ArrowDown className="h-3 w-3 mr-1" />
-              <span>{request.destination}</span>
+              <span>{request.destinationCity}</span>
             </div>
           </div>
         );

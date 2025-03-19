@@ -21,12 +21,16 @@ export default function CompanyHomePage() {
     queryKey: ["/api/company/active-requests"],
   });
   
+  const { data: completedRequests, isLoading: isCompletedLoading } = useQuery<FreightRequestWithQuote[]>({
+    queryKey: ["/api/company/completed-requests"],
+  });
+  
   // Calculate statistics
   const stats = {
     newRequests: pendingRequests?.length || 0,
-    quoted: activeRequests?.filter(req => req.status === "quoted").length || 0,
-    inProgress: activeRequests?.filter(req => req.status === "accepted").length || 0,
-    completed: 0, // For demonstration purposes
+    quoted: 0, // Agora só temos fretes com status "accepted" na lista de ativos
+    inProgress: activeRequests?.length || 0,
+    completed: completedRequests?.length || 0,
   };
   
   // Define columns for pending requests table
@@ -105,21 +109,58 @@ export default function CompanyHomePage() {
       id: "actions",
       header: () => <div className="text-right">Ações</div>,
       cell: ({ row }) => {
-        const isAccepted = row.original.status === "accepted";
         return (
           <div className="text-right">
             <Button
               variant="link"
               className="h-8 px-2 text-primary"
-              onClick={() => {
-                if (isAccepted) {
-                  navigate(`/company/requests/${row.original.id}`);
-                } else {
-                  navigate(`/company/quotes/${row.original.id}`);
-                }
-              }}
+              onClick={() => navigate(`/company/requests/${row.original.id}`)}
             >
-              {isAccepted ? "Atualizar" : "Ver Detalhes"}
+              Atualizar
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+  
+  // Define columns for completed requests table
+  const completedRequestsColumns: ColumnDef<FreightRequestWithQuote>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <span className="font-medium">#{row.getValue("id")}</span>,
+    },
+    {
+      accessorKey: "clientName",
+      header: "Cliente",
+    },
+    {
+      accessorKey: "route",
+      header: "Rota",
+      cell: ({ row }) => {
+        return `${row.original.originCity} → ${row.original.destinationCity}`;
+      },
+    },
+    {
+      accessorKey: "completedDate",
+      header: "Concluído em",
+      cell: ({ row }) => {
+        return row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString('pt-BR') : '-';
+      }
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Ações</div>,
+      cell: ({ row }) => {
+        return (
+          <div className="text-right">
+            <Button
+              variant="link"
+              className="h-8 px-2 text-primary"
+              onClick={() => navigate(`/company/requests/${row.original.id}`)}
+            >
+              Ver Detalhes
             </Button>
           </div>
         );
@@ -226,7 +267,7 @@ export default function CompanyHomePage() {
         </Card>
         
         {/* In Progress Section */}
-        <Card>
+        <Card className="mb-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium text-foreground">Fretes em Andamento</CardTitle>
           </CardHeader>
@@ -240,6 +281,26 @@ export default function CompanyHomePage() {
               <DataTable 
                 columns={activeRequestsColumns}
                 data={activeRequests || []}
+              />
+            </CardContent>
+          )}
+        </Card>
+        
+        {/* Completed Requests Section */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-foreground">Fretes Concluídos</CardTitle>
+          </CardHeader>
+          
+          {isCompletedLoading ? (
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          ) : (
+            <CardContent className="p-0">
+              <DataTable 
+                columns={completedRequestsColumns}
+                data={completedRequests || []}
               />
             </CardContent>
           )}
