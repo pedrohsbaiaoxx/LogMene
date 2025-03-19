@@ -133,7 +133,7 @@ export default function CompanyHomePage() {
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h2 className="text-2xl font-bold">Painel da Transportadora</h2>
+          <h2 className="text-2xl font-bold text-foreground">Painel da Transportadora</h2>
           
           <div className="mt-3 md:mt-0">
             <Button 
@@ -161,44 +161,44 @@ export default function CompanyHomePage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-700">Novas Solicitações</h3>
+                    <h3 className="font-medium text-foreground">Novas Solicitações</h3>
                     <AlertCircle className="h-5 w-5 text-[#2196F3]" />
                   </div>
                   <p className="text-3xl font-bold text-[#2196F3]">{stats.newRequests}</p>
-                  <p className="text-sm text-neutral-500">Aguardando cotação</p>
+                  <p className="text-sm text-muted-foreground">Aguardando cotação</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-700">Cotadas</h3>
+                    <h3 className="font-medium text-foreground">Cotadas</h3>
                     <PieChart className="h-5 w-5 text-[#FF9800]" />
                   </div>
                   <p className="text-3xl font-bold text-[#FF9800]">{stats.quoted}</p>
-                  <p className="text-sm text-neutral-500">Aguardando resposta</p>
+                  <p className="text-sm text-muted-foreground">Aguardando resposta</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-700">Em Andamento</h3>
+                    <h3 className="font-medium text-foreground">Em Andamento</h3>
                     <TruckIcon className="h-5 w-5 text-primary" />
                   </div>
                   <p className="text-3xl font-bold text-primary">{stats.inProgress}</p>
-                  <p className="text-sm text-neutral-500">Fretes ativos</p>
+                  <p className="text-sm text-muted-foreground">Fretes ativos</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-neutral-700">Concluídas</h3>
+                    <h3 className="font-medium text-foreground">Concluídas</h3>
                     <CheckCircle className="h-5 w-5 text-[#4CAF50]" />
                   </div>
                   <p className="text-3xl font-bold text-[#4CAF50]">{stats.completed}</p>
-                  <p className="text-sm text-neutral-500">No último mês</p>
+                  <p className="text-sm text-muted-foreground">No último mês</p>
                 </CardContent>
               </Card>
             </>
@@ -208,7 +208,7 @@ export default function CompanyHomePage() {
         {/* New Requests Section */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-neutral-700">Novas Solicitações</CardTitle>
+            <CardTitle className="text-lg font-medium text-foreground">Novas Solicitações</CardTitle>
           </CardHeader>
           
           {isPendingLoading ? (
@@ -228,7 +228,7 @@ export default function CompanyHomePage() {
         {/* In Progress Section */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-neutral-700">Fretes em Andamento</CardTitle>
+            <CardTitle className="text-lg font-medium text-foreground">Fretes em Andamento</CardTitle>
           </CardHeader>
           
           {isActiveLoading ? (
