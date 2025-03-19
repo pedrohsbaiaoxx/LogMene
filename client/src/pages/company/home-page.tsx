@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { formatISODateToDisplay } from "@/lib/utils";
 
 export default function CompanyHomePage() {
   const [, navigate] = useLocation();
@@ -63,6 +64,7 @@ export default function CompanyHomePage() {
     {
       accessorKey: "pickupDate",
       header: "Data Solicitada",
+      cell: ({ row }) => formatISODateToDisplay(row.original.pickupDate),
     },
     {
       id: "actions",
@@ -104,6 +106,7 @@ export default function CompanyHomePage() {
     {
       accessorKey: "deliveryDate",
       header: "Entrega Prevista",
+      cell: ({ row }) => formatISODateToDisplay(row.original.deliveryDate),
     },
     {
       id: "actions",
@@ -146,7 +149,7 @@ export default function CompanyHomePage() {
       accessorKey: "completedDate",
       header: "Concluído em",
       cell: ({ row }) => {
-        return row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString('pt-BR') : '-';
+        return row.original.completedAt ? formatISODateToDisplay(row.original.completedAt.toString()) : '-';
       }
     },
     {
