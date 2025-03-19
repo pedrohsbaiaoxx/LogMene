@@ -78,30 +78,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // req.user é garantido existir pelo middleware ensureClient
       const userId = req.user!.id;
-      const requestData = insertFreightRequestSchema.parse({
-        ...req.body,
-        userId
-      });
       
-      const freightRequest = await storage.createFreightRequest(requestData);
+      console.log("Corpo da requisição recebido:", req.body);
       
-      // Enviar notificação para empresas sobre nova solicitação
-      // Buscando usuários que são empresas para notificá-los
-      const allUsers = await storage.getAllUsers();
-      const companyUsers = allUsers.filter(user => user.role === "company");
-      if (companyUsers.length > 0) {
-        // Usar o nome completo do cliente para a notificação
-        const clientName = req.user!.fullName || req.user!.username;
+      try {
+        const requestData = insertFreightRequestSchema.parse({
+          ...req.body,
+          userId
+        });
+        console.log("Dados validados:", requestData);
         
-        // Notificar cada empresa
-        for (const companyUser of companyUsers) {
-          sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
+        const freightRequest = await storage.createFreightRequest(requestData);
+        console.log("Solicitação criada:", freightRequest);
+        
+        // Enviar notificação para empresas sobre nova solicitação
+        // Buscando usuários que são empresas para notificá-los
+        const allUsers = await storage.getAllUsers();
+        const companyUsers = allUsers.filter(user => user.role === "company");
+        if (companyUsers.length > 0) {
+          // Usar o nome completo do cliente para a notificação
+          const clientName = req.user!.fullName || req.user!.username;
+          
+          // Notificar cada empresa
+          for (const companyUser of companyUsers) {
+            sendNewFreightRequestNotification(companyUser.id, freightRequest.id, clientName);
+          }
         }
+        
+        res.status(201).json(freightRequest);
+      } catch (validationError) {
+        console.error("Erro de validação:", validationError);
+        if (validationError instanceof ZodError) {
+          const validationMessage = fromZodError(validationError);
+          return res.status(400).json({ message: validationMessage.message });
+        }
+        throw validationError; // Repassa o erro para o tratamento global
       }
-      
-      res.status(201).json(freightRequest);
     } catch (error) {
-      handleZodError(error, res);
+      console.error("Erro ao criar solicitação de frete:", error);
+      res.status(500).json({ message: "Erro interno do servidor ao criar solicitação", details: String(error) });
     }
   });
 
