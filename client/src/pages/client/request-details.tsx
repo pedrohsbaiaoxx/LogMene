@@ -7,7 +7,7 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
-import { DeliveryProofUploader } from "@/components/delivery-proof-uploader";
+import { DeliveryProofViewer } from "@/components/delivery-proof-viewer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -327,16 +327,9 @@ export default function RequestDetailsPage() {
                     Comprovante de Entrega
                   </div>
                 </h3>
-                <DeliveryProofUploader 
+                <DeliveryProofViewer 
                   requestId={request.id} 
                   requestStatus={request.status}
-                  onSuccess={() => {
-                    toast({
-                      title: "Comprovante enviado",
-                      description: "O comprovante de entrega foi enviado com sucesso."
-                    });
-                    queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
-                  }}
                 />
               </div>
             )}
