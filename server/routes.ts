@@ -247,6 +247,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       log(`Iniciando teste de WhatsApp para o número: ${phone}`, 'whatsapp-test');
       
+      // Log das variáveis de ambiente para debug
+      const simulationModeValue = process.env.WHATSAPP_SIMULATION_MODE;
+      log(`Variável de ambiente WHATSAPP_SIMULATION_MODE="${simulationModeValue}" (${typeof simulationModeValue})`, 'whatsapp-test');
+      
       // Enviando uma mensagem WhatsApp de teste
       const result = await sendNewFreightRequestWhatsApp(
         phone,
@@ -259,7 +263,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         log(`WhatsApp de teste enviado com sucesso para: ${phone}`, 'whatsapp-test');
         res.json({ 
           success: true, 
-          message: `WhatsApp de teste enviado com sucesso para ${phone}` 
+          message: `WhatsApp de teste enviado com sucesso para ${phone}`,
+          simulation_mode: true,
+          phone_formatted: phone.replace(/\D/g, '')
         });
       } else {
         log(`Falha ao enviar WhatsApp de teste para: ${phone}`, 'whatsapp-test');
