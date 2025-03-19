@@ -1,12 +1,12 @@
-import { MailService } from '@sendgrid/mail';
+import Brevo from '@getbrevo/brevo';
 import { log } from '../vite';
 
-const mailService = new MailService();
+// Configuração do cliente Brevo
+const client = Brevo.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY || '';
 
-// Configuração inicial da chave API
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-}
+const emailApi = new Brevo.TransactionalEmailsApi();
 
 interface EmailParams {
   to: string;
@@ -18,24 +18,24 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   // Se não tiver configurado a API key, apenas loga e retorna como enviado
-  if (!process.env.SENDGRID_API_KEY) {
+  if (!process.env.BREVO_API_KEY) {
     log(`[Email simulado] Para: ${params.to}, Assunto: ${params.subject}`, 'email-service');
     log(`[Email simulado] Conteúdo: ${params.text || params.html}`, 'email-service');
     return true;
   }
 
   try {
-    await mailService.send({
-      to: params.to,
-      from: params.from, // deve ser um remetente verificado no SendGrid
+    await client.sendEmail({
+      sender: { email: params.from },
+      to: [{ email: params.to }],
       subject: params.subject,
-      text: params.text || '',
-      html: params.html || '',
+      htmlContent: params.html || '',
+      textContent: params.text || ''
     });
     log(`Email enviado para ${params.to}`, 'email-service');
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('Brevo email error:', error);
     return false;
   }
 }
