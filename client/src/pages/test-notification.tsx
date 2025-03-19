@@ -22,15 +22,10 @@ export default function TestNotificationPage() {
     requestId: 1,
     type: "status_update" as "status_update" | "quote_received" | "proof_uploaded",
     message: "Teste de notificação do sistema LogMene",
-    sendEmail: false,
-    sendWhatsApp: false
+    sendEmail: false
   });
   
-  // Formulário para teste direto de WhatsApp
-  const [whatsappForm, setWhatsappForm] = useState({
-    phoneNumber: "+5535999220624",
-    message: "Teste de mensagem WhatsApp do sistema LogMene em modo de produção."
-  });
+  // Funcionalidade de WhatsApp removida conforme solicitação do cliente
   
   // Formulário para teste de email
   const [emailForm, setEmailForm] = useState({
@@ -143,45 +138,7 @@ export default function TestNotificationPage() {
     }
   };
   
-  const handleWhatsAppSubmit = async () => {
-    setLoading(true);
-    setResult(null);
-    
-    try {
-      const response = await fetch('/api/test/whatsapp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(whatsappForm)
-      });
-      
-      const data = await response.json();
-      setResult(data);
-      
-      if (response.ok) {
-        toast({
-          title: "WhatsApp enviado",
-          description: data.message,
-        });
-      } else {
-        toast({
-          title: "Erro ao enviar WhatsApp",
-          description: data.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao testar WhatsApp:", error);
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao testar o envio de WhatsApp. Verifique o console para mais detalhes.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Função de envio de WhatsApp removida conforme solicitação do cliente
   
   return (
     <div className="container mx-auto pb-8">
@@ -313,71 +270,7 @@ export default function TestNotificationPage() {
           </CardFooter>
         </Card>
         
-        {/* Teste de WhatsApp */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Teste de WhatsApp em Produção</CardTitle>
-            <CardDescription>
-              <span className="text-red-500 font-bold">ATENÇÃO:</span> Enviar uma mensagem real via WhatsApp (Twilio)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 text-sm">
-              <p className="mb-2">
-                <strong>Importante:</strong> Este formulário envia mensagens WhatsApp reais através do Twilio em modo de produção.
-              </p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>O número de telefone deve estar no formato internacional (ex: +5535999990000)</li>
-                <li>O número de destino precisa estar cadastrado no WhatsApp</li>
-                <li>Para receber mensagens, o número de destino precisa ter iniciado uma conversa com o número do Twilio</li>
-                <li>Nos planos básicos do Twilio, só é possível enviar para números verificados na plataforma</li>
-                <li>Em caso de erro, verifique os logs detalhados no console do servidor</li>
-              </ul>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Número de Telefone (formato internacional com +)</Label>
-              <Input 
-                id="phoneNumber" 
-                type="text" 
-                value={whatsappForm.phoneNumber}
-                onChange={(e) => setWhatsappForm({
-                  ...whatsappForm,
-                  phoneNumber: e.target.value
-                })}
-                placeholder="+5535999990000"
-              />
-              <p className="text-xs text-muted-foreground">Ex: +5535999990000 (formato internacional com código do país)</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="whatsappMessage">Mensagem</Label>
-              <Textarea 
-                id="whatsappMessage" 
-                value={whatsappForm.message}
-                onChange={(e) => setWhatsappForm({
-                  ...whatsappForm,
-                  message: e.target.value
-                })}
-                placeholder="Digite aqui a mensagem que deseja enviar via WhatsApp..."
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              onClick={handleWhatsAppSubmit} 
-              disabled={loading}
-              variant="destructive"
-              className="w-full"
-            >
-              {loading ? "Enviando..." : "ENVIAR WHATSAPP EM PRODUÇÃO"}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Ao clicar no botão acima, você concorda em enviar uma mensagem real para o número informado.
-              Mensagens enviadas podem gerar custos na sua conta do Twilio.
-            </p>
-          </CardFooter>
-        </Card>
+        {/* Seção de WhatsApp removida conforme solicitação do cliente */}
       </div>
       
       {/* Exibir resultado */}
