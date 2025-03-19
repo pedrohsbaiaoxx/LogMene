@@ -1,6 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from 'fs';
+import path from 'path';
+
+// Carrega variáveis de ambiente do arquivo .env se existir
+try {
+  const envPath = path.resolve('.env');
+  if (fs.existsSync(envPath)) {
+    log('Carregando variáveis de ambiente do arquivo .env', 'env-loader');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const match = line.match(/^\s*([^#][^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim().replace(/^['"](.*)['"]$/, '$1'); // Remove aspas se existirem
+        process.env[key] = value;
+        log(`Variável ${key} carregada com sucesso`, 'env-loader');
+      }
+    });
+  }
+} catch (error) {
+  log(`Erro ao carregar arquivo .env: ${error}`, 'env-loader');
+}
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));

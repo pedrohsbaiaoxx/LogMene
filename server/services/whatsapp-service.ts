@@ -9,6 +9,9 @@ const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.T
 // Modo de simulação (útil para desenvolvimento e testes)
 const SIMULATION_MODE = process.env.WHATSAPP_SIMULATION_MODE === 'true';
 
+// Log de inicialização para verificar as configurações
+log(`Serviço WhatsApp inicializado. Modo de simulação: ${SIMULATION_MODE ? 'ATIVADO' : 'DESATIVADO'}`, 'twilio-whatsapp-init');
+
 /**
  * Envia uma mensagem WhatsApp para o número especificado
  * 
