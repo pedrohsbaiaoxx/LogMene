@@ -96,8 +96,8 @@ export default function CreateQuotePage() {
     
     setIsCalculatingDistance(true);
     calculateDistanceMutation.mutate({
-      fromAddress: request.origin,
-      toAddress: request.destination
+      fromAddress: `${request.originStreet}, ${request.originCity} - ${request.originState}`,
+      toAddress: `${request.destinationStreet}, ${request.destinationCity} - ${request.destinationState}`
     });
   };
 
@@ -246,10 +246,14 @@ export default function CreateQuotePage() {
               <div className="mb-4">
                 <p className="text-sm text-neutral-500">Rota</p>
                 <div className="flex flex-col md:flex-row items-start md:items-center text-neutral-700">
-                  <span className="font-medium">{request.origin}</span>
+                  <span className="font-medium">
+                    {request.originStreet}, {request.originCity} - {request.originState}
+                  </span>
                   <span className="hidden md:block mx-2">→</span>
                   <span className="md:hidden my-1">↓</span>
-                  <span className="font-medium">{request.destination}</span>
+                  <span className="font-medium">
+                    {request.destinationStreet}, {request.destinationCity} - {request.destinationState}
+                  </span>
                 </div>
                 
                 {/* Cálculo de distância */}
@@ -296,6 +300,7 @@ export default function CreateQuotePage() {
                     {request.cargoType === "fragile" && "Frágil"}
                     {request.cargoType === "perishable" && "Perecível"}
                     {request.cargoType === "dangerous" && "Perigosa"}
+                    {request.cargoType === "fractional" && "Carga Fracionada"}
                   </p>
                 </div>
                 <div>
