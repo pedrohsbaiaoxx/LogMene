@@ -1,14 +1,12 @@
 import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
-// Configuração do transportador de email
+// Configuração do transportador de email usando Gmail
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false, // true para 465, false para outras portas
+  service: 'gmail',
   auth: {
-    user: 'noreply@logmene.com', // ou outro email que você quiser usar como remetente
-    pass: process.env.BREVO_API_KEY || ''
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
   }
 });
 
@@ -21,17 +19,20 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  // Se não tiver configurado a API key, apenas loga e retorna como enviado
-  if (!process.env.BREVO_API_KEY) {
+  // Se não tiver configurado o email e senha, apenas loga e retorna como enviado
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
     log(`[Email simulado] Para: ${params.to}, Assunto: ${params.subject}`, 'email-service');
     log(`[Email simulado] Conteúdo: ${params.text || params.html}`, 'email-service');
     return true;
   }
 
   try {
+    // Atualizamos o remetente para usar o email configurado
+    const from = process.env.EMAIL_USER;
+    
     // Enviando email usando nodemailer
     const info = await transporter.sendMail({
-      from: params.from,
+      from: from,
       to: params.to,
       subject: params.subject,
       text: params.text || '',
@@ -41,7 +42,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     log(`Email enviado para ${params.to}. ID da mensagem: ${info.messageId}`, 'email-service');
     return true;
   } catch (error) {
-    console.error('Brevo email error:', error);
+    console.error('Nodemailer error:', error);
     return false;
   }
 }

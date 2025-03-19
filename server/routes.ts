@@ -834,6 +834,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota de teste para enviar email
+  app.get("/api/test-email", async (req, res) => {
+    try {
+      console.log("Iniciando teste de envio de email para pedroxxsb@gmail.com");
+      
+      const result = await sendEmail({
+        to: 'pedroxxsb@gmail.com',
+        from: 'noreply@logmene.com',
+        subject: 'Teste de Email do LogMene',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #2E3192;">Teste de Email do LogMene</h2>
+            <p>Este é um email de teste do sistema LogMene.</p>
+            <p>Se você recebeu este email, significa que a integração com o serviço de email está funcionando corretamente.</p>
+            <p>Data e hora do envio: ${new Date().toLocaleString('pt-BR')}</p>
+          </div>
+        `
+      });
+      
+      if (result) {
+        console.log("Email de teste enviado com sucesso");
+        res.json({ success: true, message: 'Email enviado com sucesso!' });
+      } else {
+        console.log("Falha ao enviar email de teste");
+        res.status(500).json({ success: false, message: 'Falha ao enviar email' });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar email de teste:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Erro ao enviar email', 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
