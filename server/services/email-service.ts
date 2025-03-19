@@ -2,18 +2,21 @@ import nodemailer from 'nodemailer';
 import { log } from '../vite';
 
 // Configuração do transportador de email usando Gmail
-// Nota: Para Gmail, você deve usar uma "senha de aplicativo" nas configurações de segurança da conta
-// e não a senha normal da sua conta
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // true para porta 465
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   },
-  logger: true, // Ativa logs para depuração
-  debug: true // Inclui logs de SMTP para depuração
+  tls: {
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false
+  },
+  logger: true,
+  debug: true
 });
 
 interface EmailParams {
