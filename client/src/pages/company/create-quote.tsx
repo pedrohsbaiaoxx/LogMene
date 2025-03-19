@@ -194,44 +194,9 @@ export default function CreateQuotePage() {
                     {request.destinationStreet}, {request.destinationCity} - {request.destinationState}
                   </span>
                 </div>
-                
-                {/* Cálculo de distância */}
-                <div className="mt-3">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-1"
-                    onClick={handleCalculateDistance}
-                    disabled={isCalculatingDistance}
-                  >
-                    <Map className="h-4 w-4" />
-                    {isCalculatingDistance 
-                      ? "Calculando..." 
-                      : distance 
-                        ? "Recalcular distância" 
-                        : "Calcular distância"}
-                  </Button>
-                  
-                  {distance !== null && (
-                    <div className="mt-2 flex flex-col">
-                      <div className="flex items-center gap-1">
-                        <TruckIcon className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">
-                          Distância estimada: <Badge variant="outline">{distance} km</Badge>
-                        </span>
-                      </div>
-                      <p className="text-xs text-neutral-500 mt-1">
-                        Valores sugeridos: 
-                        R$ {(100 + (distance * 2.5)).toFixed(2)} | 
-                        Prazo: {Math.max(1, Math.ceil(distance / 400))} dias
-                      </p>
-                    </div>
-                  )}
-                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm text-neutral-500">Tipo de Carga</p>
                   <p className="font-medium text-neutral-700">
@@ -240,6 +205,12 @@ export default function CreateQuotePage() {
                     {request.cargoType === "perishable" && "Perecível"}
                     {request.cargoType === "dangerous" && "Perigosa"}
                     {request.cargoType === "fractional" && "Carga Fracionada"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-neutral-500">Valor da Nota</p>
+                  <p className="font-medium text-neutral-700">
+                    {request.invoiceValue ? `R$ ${request.invoiceValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : "Não informado"}
                   </p>
                 </div>
                 <div>
