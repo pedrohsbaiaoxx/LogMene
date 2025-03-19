@@ -135,7 +135,7 @@ export async function generateClientFreightReport(
       
       const tableTop = doc.y;
       const tableHeaders = ['ID', 'Status', 'Origem', 'Destino', 'Data Envio', 'Data Entrega', 'Dist. (km)', 'Valor (R$)', 'Conclusão'];
-      const colWidths = [30, 55, 65, 65, 55, 55, 45, 60, 60];
+      const colWidths = [25, 55, 60, 60, 55, 55, 55, 55, 75]; // Ajustado para acomodar melhor a distância e conclusão
       const tableWidth = doc.page.width - 100; // Margens esquerda e direita somadas
       
       // Desenhar fundo do cabeçalho
@@ -185,12 +185,12 @@ export async function generateClientFreightReport(
             ) 
           : '-';
         
-        // Formatar a distância e garantir que seja exibida com 2 casas decimais quando disponível
+        // Formatar a distância e garantir que seja exibida com 1 casa decimal quando disponível
         const distanceFormatted = request.quote?.distanceKm 
-          ? request.quote.distanceKm.toLocaleString('pt-BR', { 
+          ? `${request.quote.distanceKm.toLocaleString('pt-BR', { 
               minimumFractionDigits: 1,
               maximumFractionDigits: 1
-            })
+            })}`
           : '-';
             
         const rowValues = [
@@ -466,11 +466,11 @@ function addPageHeader(doc: PDFKit.PDFDocument, title: string) {
 
 // Função para adicionar o rodapé da página
 function addPageFooter(doc: PDFKit.PDFDocument) {
-  const pageNumber = doc.page.pageNumber;
-  
+  // Como a propriedade pageNumber não existe diretamente,
+  // podemos usar um número fixo ou implementar um contador posteriormente
   doc.font('Helvetica').fontSize(8).fillColor('#6b7280');
   doc.text(
-    `Página ${pageNumber}`,
+    'LogMene - Sistema de Logística Inteligente',
     50,
     doc.page.height - 50,
     { align: 'center', width: doc.page.width - 100 }
@@ -506,11 +506,9 @@ function addFooter(doc: PDFKit.PDFDocument) {
     { align: 'center', width: doc.page.width - 100 }
   );
   
-  // Número da página
-  const pageNumber = doc.page.pageNumber;
-  
+  // Data do relatório no rodapé
   doc.text(
-    `Página ${pageNumber}`,
+    `${formattedDate}`,
     50,
     doc.page.height - 30,
     { align: 'center', width: doc.page.width - 100 }
