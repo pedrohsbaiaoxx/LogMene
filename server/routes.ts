@@ -286,6 +286,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Endpoint para buscar informações de um CNPJ
+  app.get("/api/cnpj/:cnpj", async (req, res) => {
+    try {
+      const { cnpj } = req.params;
+      
+      if (!cnpj) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "CNPJ é obrigatório" 
+        });
+      }
+      
+      // Remover caracteres não numéricos do CNPJ
+      const cleanCNPJ = cnpj.replace(/\D/g, '');
+      
+      // Validar o CNPJ
+      if (!validateCNPJ(cleanCNPJ)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "CNPJ inválido" 
+        });
+      }
+      
+      log(`Buscando dados do CNPJ: ${cleanCNPJ}`, 'cnpj-service');
+      
+      const cnpjData = await fetchCNPJData(cleanCNPJ);
+      
+      if (!cnpjData) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Não foi possível encontrar dados para este CNPJ" 
+        });
+      }
+      
+      if (cnpjData.error) {
+        return res.status(404).json({ 
+          success: false, 
+          message: cnpjData.error 
+        });
+      }
+      
+      // Formatar o endereço completo
+      const formattedAddress = formatAddress(cnpjData);
+      
+      return res.json({
+        success: true,
+        data: {
+          ...cnpjData,
+          formattedAddress
+        }
+      });
+    } catch (error) {
+      log(`Erro ao buscar CNPJ: ${error}`, 'cnpj-service');
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erro ao processar a requisição",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Error handler for Zod validation errors
   const handleZodError = (error: unknown, res: Response) => {

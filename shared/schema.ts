@@ -28,16 +28,28 @@ export const requestStatus = ["pending", "quoted", "accepted", "rejected", "comp
 export const freightRequests = pgTable("freight_requests", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  // Campos de origem
+  originCNPJ: text("origin_cnpj"),
+  originCompanyName: text("origin_company_name"),
   originStreet: text("origin_street").notNull(),
   originCity: text("origin_city").notNull(),
   originState: text("origin_state").notNull(),
+  originZipCode: text("origin_zip_code"),
+  // Campos de destino
+  destinationCNPJ: text("destination_cnpj"),
+  destinationCompanyName: text("destination_company_name"),
   destinationStreet: text("destination_street").notNull(),
   destinationCity: text("destination_city").notNull(),
   destinationState: text("destination_state").notNull(),
+  destinationZipCode: text("destination_zip_code"),
+  // Informações da carga
   cargoType: text("cargo_type").notNull(),
   weight: real("weight").notNull(),
   volume: real("volume").notNull(),
   invoiceValue: real("invoice_value").notNull(), // Valor da nota fiscal
+  cargoDescription: text("cargo_description"),
+  packageQuantity: integer("package_quantity"),
+  // Informações de datas e notas
   pickupDate: text("pickup_date").notNull(),
   deliveryDate: text("delivery_date").notNull(),
   notes: text("notes"),
@@ -49,16 +61,28 @@ export const freightRequests = pgTable("freight_requests", {
 
 export const insertFreightRequestSchema = createInsertSchema(freightRequests).pick({
   userId: true,
+  // Campos de origem
+  originCNPJ: true,
+  originCompanyName: true,
   originStreet: true,
   originCity: true,
   originState: true,
+  originZipCode: true,
+  // Campos de destino
+  destinationCNPJ: true,
+  destinationCompanyName: true,
   destinationStreet: true,
   destinationCity: true,
   destinationState: true,
+  destinationZipCode: true,
+  // Informações da carga
   cargoType: true,
   weight: true,
   volume: true,
   invoiceValue: true,
+  cargoDescription: true,
+  packageQuantity: true,
+  // Outros campos
   pickupDate: true,
   deliveryDate: true,
   notes: true,

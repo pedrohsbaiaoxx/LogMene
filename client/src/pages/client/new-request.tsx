@@ -71,16 +71,28 @@ export default function NewRequestPage() {
   const form = useForm<z.infer<typeof extendedFormSchema>>({
     resolver: zodResolver(extendedFormSchema),
     defaultValues: {
+      // Campos de origem
+      originCNPJ: "",
+      originCompanyName: "",
       originStreet: "",
       originCity: "",
       originState: "",
+      originZipCode: "",
+      // Campos de destino
+      destinationCNPJ: "",
+      destinationCompanyName: "",
       destinationStreet: "",
       destinationCity: "",
       destinationState: "",
+      destinationZipCode: "",
+      // Informações da carga
       cargoType: "",
       weight: undefined, 
       volume: undefined,
       invoiceValue: undefined,
+      cargoDescription: "",
+      packageQuantity: undefined,
+      // Outros campos
       pickupDate: "",
       deliveryDate: "",
       notes: "",
@@ -127,12 +139,23 @@ export default function NewRequestPage() {
   function onSubmit(values: z.infer<typeof extendedFormSchema>) {
     console.log("Enviando valores:", values);
     
-    // Convertendo undefined para 0 antes de enviar para o backend
+    // Convertendo undefined para 0 ou valores padrão antes de enviar para o backend
     const formattedValues = {
       ...values,
+      // Campos numéricos
       weight: values.weight === undefined ? 0 : values.weight,
       volume: values.volume === undefined ? 0 : values.volume,
-      invoiceValue: values.invoiceValue === undefined ? 0 : values.invoiceValue
+      invoiceValue: values.invoiceValue === undefined ? 0 : values.invoiceValue,
+      packageQuantity: values.packageQuantity === undefined ? 0 : values.packageQuantity,
+      
+      // Strings opcionais (garantindo que sejam strings vazias e não undefined)
+      originCNPJ: values.originCNPJ || "",
+      originCompanyName: values.originCompanyName || "",
+      originZipCode: values.originZipCode || "",
+      destinationCNPJ: values.destinationCNPJ || "",
+      destinationCompanyName: values.destinationCompanyName || "",
+      destinationZipCode: values.destinationZipCode || "",
+      cargoDescription: values.cargoDescription || ""
     };
     
     createRequestMutation.mutate(formattedValues);
@@ -274,6 +297,57 @@ export default function NewRequestPage() {
                               }}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Campos adicionais de informações da carga */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <FormField
+                      control={form.control}
+                      name="packageQuantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantidade de Volumes</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1" 
+                              step="1"
+                              placeholder="Quantidade de caixas/paletes/volumes"
+                              value={field.value === 0 || field.value === undefined ? "" : field.value}
+                              onChange={(e) => {
+                                const value = e.target.value === "" ? undefined : parseInt(e.target.value);
+                                field.onChange(value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Número total de volumes a serem transportados
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cargoDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição da Carga</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Ex: Produtos eletrônicos, móveis, etc."
+                              {...field}
+                              className="bg-white text-black border-neutral-300"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Descrição detalhada dos itens a serem transportados
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
