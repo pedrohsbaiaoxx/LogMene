@@ -65,6 +65,15 @@ export default function NewRequestPage() {
     destinationCity: z.string().nonempty({ message: "Cidade de destino é obrigatória" }),
     destinationState: z.string().nonempty({ message: "Estado de destino é obrigatório" }),
     invoiceValue: z.number({ required_error: "Valor da nota é obrigatório" }).min(0.01, { message: "Valor da nota deve ser maior que zero" }),
+    // Campos adicionais
+    originCNPJ: z.string().optional(),
+    originCompanyName: z.string().optional(),
+    originZipCode: z.string().optional(),
+    destinationCNPJ: z.string().optional(),
+    destinationCompanyName: z.string().optional(),
+    destinationZipCode: z.string().optional(),
+    cargoDescription: z.string().optional(),
+    packageQuantity: z.number().int().positive().optional(),
   });
 
   // Create the form
@@ -317,10 +326,10 @@ export default function NewRequestPage() {
                               min="1" 
                               step="1"
                               placeholder="Quantidade de caixas/paletes/volumes"
-                              value={field.value === 0 || field.value === undefined ? "" : field.value}
+                              value={field.value === 0 || field.value === undefined || field.value === null ? "" : field.value}
                               onChange={(e) => {
                                 const value = e.target.value === "" ? undefined : parseInt(e.target.value, 10);
-                                field.onChange(value === undefined ? value : Math.max(0, value));
+                                field.onChange(value);
                               }}
                             />
                           </FormControl>
