@@ -17,6 +17,7 @@ import { fromZodError } from "zod-validation-error";
 import { log } from "./vite";
 import { sendEmail, sendNewFreightRequestEmail } from "./services/mailersend-service";
 import axios from "axios";
+import { fetchCNPJData, formatAddress, validateCNPJ } from "./services/cnpj-service";
 // Serviço de SMS removido conforme solicitação do cliente
 // Serviço de WhatsApp removido conforme solicitação do cliente
 import { 
