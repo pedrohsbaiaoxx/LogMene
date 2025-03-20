@@ -319,8 +319,8 @@ export default function NewRequestPage() {
                               placeholder="Quantidade de caixas/paletes/volumes"
                               value={field.value === 0 || field.value === undefined ? "" : field.value}
                               onChange={(e) => {
-                                const value = e.target.value === "" ? undefined : parseInt(e.target.value);
-                                field.onChange(value);
+                                const value = e.target.value === "" ? undefined : parseInt(e.target.value, 10);
+                                field.onChange(value === undefined ? value : Math.max(0, value));
                               }}
                             />
                           </FormControl>
@@ -341,7 +341,11 @@ export default function NewRequestPage() {
                           <FormControl>
                             <Input 
                               placeholder="Ex: Produtos eletrônicos, móveis, etc."
-                              {...field}
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                               className="bg-white text-black border-neutral-300"
                             />
                           </FormControl>
