@@ -29,14 +29,14 @@ export const freightRequests = pgTable("freight_requests", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   // Campos de origem
-  originCNPJ: text("origin_cnpj"),
+  originCNPJ: text("origin_cnpj").notNull(),
   originCompanyName: text("origin_company_name"),
   originStreet: text("origin_street").notNull(),
   originCity: text("origin_city").notNull(),
   originState: text("origin_state").notNull(),
   originZipCode: text("origin_zip_code"),
   // Campos de destino
-  destinationCNPJ: text("destination_cnpj"),
+  destinationCNPJ: text("destination_cnpj").notNull(),
   destinationCompanyName: text("destination_company_name"),
   destinationStreet: text("destination_street").notNull(),
   destinationCity: text("destination_city").notNull(),

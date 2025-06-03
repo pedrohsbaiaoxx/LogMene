@@ -148,14 +148,14 @@ export default function NewRequestPage() {
   function onSubmit(values: z.infer<typeof extendedFormSchema>) {
     console.log("Enviando valores:", values);
     
-    // Convertendo undefined para 0 ou valores padrão antes de enviar para o backend
+    // Formatando as datas para o formato esperado pelo backend
     const formattedValues = {
       ...values,
       // Campos numéricos
-      weight: values.weight === undefined ? 0 : values.weight,
-      volume: values.volume === undefined ? 0 : values.volume,
-      invoiceValue: values.invoiceValue === undefined ? 0 : values.invoiceValue,
-      packageQuantity: values.packageQuantity === undefined ? 0 : values.packageQuantity,
+      weight: Number(values.weight) || 0,
+      volume: Number(values.volume) || 0,
+      invoiceValue: Number(values.invoiceValue) || 0,
+      packageQuantity: Number(values.packageQuantity) || 0,
       
       // Strings opcionais (garantindo que sejam strings vazias e não undefined)
       originCNPJ: values.originCNPJ || "",
@@ -164,9 +164,17 @@ export default function NewRequestPage() {
       destinationCNPJ: values.destinationCNPJ || "",
       destinationCompanyName: values.destinationCompanyName || "",
       destinationZipCode: values.destinationZipCode || "",
-      cargoDescription: values.cargoDescription || ""
+      cargoDescription: values.cargoDescription || "",
+      
+      // Convertendo o tipo de carga para o valor correto
+      cargoType: values.cargoType === "Perigosa" ? "dangerous" : values.cargoType,
+      
+      // Formatando as datas
+      pickupDate: format(new Date(values.pickupDate), "yyyy-MM-dd"),
+      deliveryDate: format(new Date(values.deliveryDate), "yyyy-MM-dd")
     };
     
+    console.log("Valores formatados:", formattedValues);
     createRequestMutation.mutate(formattedValues);
   }
 
