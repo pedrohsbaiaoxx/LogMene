@@ -86,7 +86,7 @@ export default function CreateClientPage() {
             variant="outline" 
             size="sm" 
             onClick={() => navigate("/company/clients")}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 text-black"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Voltar
@@ -107,11 +107,11 @@ export default function CreateClientPage() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome de Usuário</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Nome de Usuário</FormLabel>
                       <FormControl>
-                        <Input placeholder="nome.usuario" {...field} />
+                        <Input className="text-gray-800" placeholder="nome.usuario" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -121,11 +121,11 @@ export default function CreateClientPage() {
                   name="fullName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Nome Completo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nome completo do cliente" {...field} />
+                        <Input className="text-gray-800" placeholder="Nome completo do cliente" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -135,11 +135,11 @@ export default function CreateClientPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="cliente@email.com" {...field} />
+                        <Input className="text-gray-800" type="email" placeholder="cliente@email.com" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -149,11 +149,11 @@ export default function CreateClientPage() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Telefone</FormLabel>
                       <FormControl>
-                        <Input placeholder="(00) 00000-0000" {...field} />
+                        <Input className="text-gray-800" placeholder="(00) 00000-0000" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -163,11 +163,11 @@ export default function CreateClientPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Senha</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Senha</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Senha para o cliente" {...field} />
+                        <Input className="text-gray-800" type="password" placeholder="Senha para o cliente" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -177,11 +177,11 @@ export default function CreateClientPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirmar Senha</FormLabel>
+                      <FormLabel className="text-gray-800 font-semibold">Confirmar Senha</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Confirme a senha" {...field} />
+                        <Input className="text-gray-800" type="password" placeholder="Confirme a senha" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-600" />
                     </FormItem>
                   )}
                 />
@@ -190,7 +190,7 @@ export default function CreateClientPage() {
               <div className="mt-6 pt-4 border-t flex justify-end">
                 <Button
                   type="submit"
-                  className="w-full md:w-auto"
+                  className="w-full md:w-auto text-black"
                   disabled={createClientMutation.isPending}
                 >
                   {createClientMutation.isPending ? "Cadastrando..." : "Cadastrar Cliente"}
