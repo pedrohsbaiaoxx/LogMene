@@ -229,7 +229,7 @@ export default function CreateQuotePage() {
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Volume</p>
-                  <p className="font-medium text-neutral-700">{request.volume} m³</p>
+                  <p className="font-medium text-neutral-700">{request.volume}</p>
                 </div>
               </div>
               {/* Additional notes */}
