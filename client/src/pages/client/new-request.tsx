@@ -5,7 +5,7 @@ import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -405,9 +405,20 @@ export default function NewRequestPage() {
                               mode="single"
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
-                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                if (date) {
+                                  // Adiciona 1 dia à data selecionada
+                                  const nextDay = new Date(date);
+                                  nextDay.setDate(nextDay.getDate() + 1);
+                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
+                                } else {
+                                  field.onChange("");
+                                }
                               }}
-                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                              disabled={(date) => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                return date < today;
+                              }}
                               initialFocus
                               locale={ptBR}
                             />
@@ -440,24 +451,27 @@ export default function NewRequestPage() {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-  mode="single"
-  selected={field.value ? parseISO(field.value) : undefined}
-  onSelect={(date) => {
-    if (date) {
-      const localDate = new Date(date);
-      // Ajustar a data para o fuso horário local
-      const adjustedDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
-      field.onChange(format(adjustedDate, "yyyy-MM-dd"));
-    } else {
-      field.onChange("");
-    }
-  }}
-  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-  initialFocus
-  locale={ptBR}
-/>
-
+                            <Calendar
+                              mode="single"
+                              selected={field.value ? parseISO(field.value) : undefined}
+                              onSelect={(date) => {
+                                if (date) {
+                                  // Adiciona 1 dia à data selecionada
+                                  const nextDay = new Date(date);
+                                  nextDay.setDate(nextDay.getDate() + 1);
+                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
+                                } else {
+                                  field.onChange("");
+                                }
+                              }}
+                              disabled={(date) => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                return date < today;
+                              }}
+                              initialFocus
+                              locale={ptBR}
+                            />
                           </PopoverContent>
                         </Popover>
                         <FormMessage />

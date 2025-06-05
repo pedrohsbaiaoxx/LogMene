@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { DeliveryProofUploader } from "@/components/delivery-proof-uploader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { formatISODateToDisplay } from "@/lib/utils";
+import { formatISODateToDisplay, formatDateTime } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -262,7 +262,7 @@ export default function CompanyRequestDetailsPage() {
                 <div>
                   <p className="text-sm text-neutral-500">Concluído em</p>
                   <p className="font-medium text-neutral-700">
-                    {request.completedAt ? formatISODateToDisplay(request.completedAt.toString()) : '-'}
+                    {request.deliveryProof?.createdAt ? formatDateTime(request.deliveryProof.createdAt.toString()) : '-'}
                   </p>
                 </div>
               </div>

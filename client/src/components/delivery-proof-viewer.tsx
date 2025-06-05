@@ -47,6 +47,12 @@ export function DeliveryProofViewer({ requestId, requestStatus }: DeliveryProofV
 
   // Se o comprovante existe, mostrar
   if (existingProof) {
+    // Estado para zoom
+    const [zoom, setZoom] = useState(1);
+    const handleZoomIn = () => setZoom(z => Math.min(z + 0.2, 3));
+    const handleZoomOut = () => setZoom(z => Math.max(z - 0.2, 0.4));
+    const handleResetZoom = () => setZoom(1);
+
     return (
       <Card className="w-full">
         <CardHeader>
@@ -55,18 +61,36 @@ export function DeliveryProofViewer({ requestId, requestStatus }: DeliveryProofV
             Comprovante de Entrega
           </CardTitle>
           <CardDescription>
-            Enviado em {existingProof.createdAt ? new Date(existingProof.createdAt).toLocaleDateString('pt-BR') : '-'}
+            {requestStatus === "completed" 
+              ? "A entrega foi concluída com sucesso."
+              : "A transportadora enviou o comprovante de entrega."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="aspect-video rounded-md overflow-hidden border bg-muted/20">
+          <div className="flex gap-2 mb-2 justify-center">
+            <button onClick={handleZoomOut} className="px-2 py-1 border rounded text-lg" title="Diminuir zoom">-</button>
+            <button onClick={handleResetZoom} className="px-2 py-1 border rounded text-lg" title="Resetar zoom">⟳</button>
+            <button onClick={handleZoomIn} className="px-2 py-1 border rounded text-lg" title="Aumentar zoom">+</button>
+          </div>
+          <div
+            className="flex justify-center items-center rounded-md overflow-auto border bg-muted/20 p-4"
+            style={{ width: '100%', height: 'auto', maxWidth: '100%', maxHeight: 900 }}
+          >
             <img 
               src={existingProof.proofImage} 
               alt="Comprovante de entrega" 
-              className="w-full h-full object-cover"
+              style={{
+                width: 'auto',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                margin: '0 auto',
+                transform: `rotate(90deg) scale(${zoom})`,
+                maxWidth: '100%',
+                transition: 'transform 0.2s',
+              }}
             />
           </div>
-          
           {existingProof.notes && (
             <div>
               <h4 className="font-medium mb-1 text-sm">Observações:</h4>
