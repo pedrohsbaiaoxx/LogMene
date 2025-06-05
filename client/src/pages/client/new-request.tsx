@@ -440,22 +440,24 @@ export default function NewRequestPage() {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value ? parseISO(field.value) : undefined}
-                              onSelect={(date) => {
-                                field.onChange(date ? format(date, "yyyy-MM-dd") : "");
-                              }}
-                              disabled={(date) => {
-                                const today = new Date(new Date().setHours(0, 0, 0, 0));
-                                const pickupDate = form.getValues("pickupDate") 
-                                  ? parseISO(form.getValues("pickupDate"))
-                                  : today;
-                                return date < (pickupDate > today ? pickupDate : today);
-                              }}
-                              initialFocus
-                              locale={ptBR}
-                            />
+                          <Calendar
+  mode="single"
+  selected={field.value ? parseISO(field.value) : undefined}
+  onSelect={(date) => {
+    if (date) {
+      const localDate = new Date(date);
+      // Ajustar a data para o fuso horário local
+      const adjustedDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+      field.onChange(format(adjustedDate, "yyyy-MM-dd"));
+    } else {
+      field.onChange("");
+    }
+  }}
+  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+  initialFocus
+  locale={ptBR}
+/>
+
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
