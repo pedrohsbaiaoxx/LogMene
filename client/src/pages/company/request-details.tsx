@@ -232,7 +232,7 @@ export default function CompanyRequestDetailsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Volume</p>
-                  <p className="font-medium text-neutral-700">{request.volume} m³</p>
+                  <p className="font-medium text-neutral-700">{request.volume}</p>
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Valor da Nota Fiscal</p>

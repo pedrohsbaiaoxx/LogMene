@@ -5,7 +5,7 @@ import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -277,7 +277,7 @@ export default function NewRequestPage() {
                       name="volume"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Volume (m³)</FormLabel>
+                          <FormLabel>Volume</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -403,12 +403,13 @@ export default function NewRequestPage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ? new Date(field.value) : undefined}
+                              selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 field.onChange(date ? format(date, "yyyy-MM-dd") : "");
                               }}
                               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                               initialFocus
+                              locale={ptBR}
                             />
                           </PopoverContent>
                         </Popover>
@@ -441,19 +442,19 @@ export default function NewRequestPage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ? new Date(field.value) : undefined}
+                              selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 field.onChange(date ? format(date, "yyyy-MM-dd") : "");
                               }}
                               disabled={(date) => {
-                                // Desabilitar datas anteriores à data de retirada ou à data atual
                                 const today = new Date(new Date().setHours(0, 0, 0, 0));
                                 const pickupDate = form.getValues("pickupDate") 
-                                  ? new Date(form.getValues("pickupDate")) 
+                                  ? parseISO(form.getValues("pickupDate"))
                                   : today;
                                 return date < (pickupDate > today ? pickupDate : today);
                               }}
                               initialFocus
+                              locale={ptBR}
                             />
                           </PopoverContent>
                         </Popover>
