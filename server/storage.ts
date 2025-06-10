@@ -51,6 +51,13 @@ export interface IStorage {
   
   // Session store
   sessionStore: any;
+
+  // New methods
+  deleteFreightRequest(id: number): Promise<void>;
+  updateFreightRequest(id: number, data: InsertFreightRequest): Promise<FreightRequest>;
+  getQuoteById(id: number): Promise<Quote | undefined>;
+  deleteQuote(id: number): Promise<void>;
+  updateQuote(id: number, data: InsertQuote): Promise<Quote>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -92,43 +99,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createFreightRequest(insertRequest: InsertFreightRequest): Promise<FreightRequest> {
-    // Usar SQL bruto para garantir que todos os campos sejam preenchidos corretamente
     const originValue = `${insertRequest.originStreet}, ${insertRequest.originCity}, ${insertRequest.originState}`;
     const destinationValue = `${insertRequest.destinationStreet}, ${insertRequest.destinationCity}, ${insertRequest.destinationState}`;
-    
+
     const sql = `
       INSERT INTO freight_requests (
-        user_id, origin, destination, cargo_type, weight, volume, pickup_date, delivery_date, 
-        notes, require_insurance, status, origin_street, origin_city, origin_state, 
-        destination_street, destination_city, destination_state, invoice_value
+        user_id, origin_cnpj, origin_company_name, origin_street, origin_city, origin_state, origin_zip_code,
+        destination_cnpj, destination_company_name, destination_street, destination_city, destination_state, destination_zip_code,
+        cargo_type, weight, volume, invoice_value, cargo_description, package_quantity,
+        pickup_date, delivery_date, notes, require_insurance, status, origin, destination
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18, $19,
+        $20, $21, $22, $23, $24, $25, $26
       )
       RETURNING *
     `;
-    
+
     const result = await pool.query(sql, [
       insertRequest.userId, // $1
-      originValue, // $2
-      destinationValue, // $3
-      insertRequest.cargoType, // $4
-      insertRequest.weight, // $5
-      insertRequest.volume, // $6
-      insertRequest.pickupDate, // $7
-      insertRequest.deliveryDate, // $8
-      insertRequest.notes || null, // $9
-      insertRequest.requireInsurance || false, // $10
-      "pending", // $11
-      insertRequest.originStreet, // $12
-      insertRequest.originCity, // $13
-      insertRequest.originState, // $14
-      insertRequest.destinationStreet, // $15
-      insertRequest.destinationCity, // $16
-      insertRequest.destinationState, // $17
-      insertRequest.invoiceValue // $18
+      insertRequest.originCNPJ, // $2
+      insertRequest.originCompanyName || "", // $3
+      insertRequest.originStreet, // $4
+      insertRequest.originCity, // $5
+      insertRequest.originState, // $6
+      insertRequest.originZipCode || "", // $7
+      insertRequest.destinationCNPJ, // $8
+      insertRequest.destinationCompanyName || "", // $9
+      insertRequest.destinationStreet, // $10
+      insertRequest.destinationCity, // $11
+      insertRequest.destinationState, // $12
+      insertRequest.destinationZipCode || "", // $13
+      insertRequest.cargoType, // $14
+      insertRequest.weight, // $15
+      insertRequest.volume, // $16
+      insertRequest.invoiceValue, // $17
+      insertRequest.cargoDescription || "", // $18
+      insertRequest.packageQuantity || 0, // $19
+      insertRequest.pickupDate, // $20
+      insertRequest.deliveryDate, // $21
+      insertRequest.notes || "", // $22
+      insertRequest.requireInsurance || false, // $23
+      insertRequest.status || "pending", // $24
+      originValue, // $25
+      destinationValue // $26
     ]);
-    
-    // Retornar o objeto criado
+
     return result.rows[0];
   }
 
@@ -401,6 +418,71 @@ export class DatabaseStorage implements IStorage {
       );
     
     return unreadNotifications.length;
+  }
+
+  async deleteFreightRequest(id: number): Promise<void> {
+    await db.delete(freightRequests).where(eq(freightRequests.id, id));
+  }
+
+  async updateFreightRequest(id: number, data: InsertFreightRequest): Promise<FreightRequest> {
+    // Calcular os campos origin e destination
+    const originValue = `${data.originStreet}, ${data.originCity}, ${data.originState}`;
+    const destinationValue = `${data.destinationStreet}, ${data.destinationCity}, ${data.destinationState}`;
+    
+    const [updatedRequest] = await db
+      .update(freightRequests)
+      .set({
+        userId: data.userId,
+        originCNPJ: data.originCNPJ,
+        originCompanyName: data.originCompanyName || "",
+        originStreet: data.originStreet,
+        originCity: data.originCity,
+        originState: data.originState,
+        originZipCode: data.originZipCode || "",
+        destinationCNPJ: data.destinationCNPJ,
+        destinationCompanyName: data.destinationCompanyName || "",
+        destinationStreet: data.destinationStreet,
+        destinationCity: data.destinationCity,
+        destinationState: data.destinationState,
+        destinationZipCode: data.destinationZipCode || "",
+        cargoType: data.cargoType,
+        weight: data.weight,
+        volume: data.volume,
+        invoiceValue: data.invoiceValue,
+        cargoDescription: data.cargoDescription || "",
+        packageQuantity: data.packageQuantity || 0,
+        pickupDate: data.pickupDate,
+        deliveryDate: data.deliveryDate,
+        notes: data.notes || "",
+        requireInsurance: data.requireInsurance || false,
+        status: data.status || "pending",
+        completedAt: data.status === "completed" ? new Date() : null,
+        origin: originValue,
+        destination: destinationValue
+      })
+      .where(eq(freightRequests.id, id))
+      .returning();
+    
+    return updatedRequest;
+  }
+
+  async getQuoteById(id: number): Promise<Quote | undefined> {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
+    return quote;
+  }
+
+  async deleteQuote(id: number): Promise<void> {
+    await db.delete(quotes).where(eq(quotes.id, id));
+  }
+
+  async updateQuote(id: number, data: InsertQuote): Promise<Quote> {
+    const [updatedQuote] = await db
+      .update(quotes)
+      .set(data)
+      .where(eq(quotes.id, id))
+      .returning();
+    
+    return updatedQuote;
   }
 }
 
@@ -841,6 +923,71 @@ export class MemStorage implements IStorage {
   async getUnreadNotificationsCount(userId: number): Promise<number> {
     const notifications = await this.getNotificationsByUserId(userId);
     return notifications.filter(notification => !notification.read).length;
+  }
+
+  async deleteFreightRequest(id: number): Promise<void> {
+    await db.delete(freightRequests).where(eq(freightRequests.id, id));
+  }
+
+  async updateFreightRequest(id: number, data: InsertFreightRequest): Promise<FreightRequest> {
+    // Calcular os campos origin e destination
+    const originValue = `${data.originStreet}, ${data.originCity}, ${data.originState}`;
+    const destinationValue = `${data.destinationStreet}, ${data.destinationCity}, ${data.destinationState}`;
+    
+    const [updatedRequest] = await db
+      .update(freightRequests)
+      .set({
+        userId: data.userId,
+        originCNPJ: data.originCNPJ,
+        originCompanyName: data.originCompanyName || "",
+        originStreet: data.originStreet,
+        originCity: data.originCity,
+        originState: data.originState,
+        originZipCode: data.originZipCode || "",
+        destinationCNPJ: data.destinationCNPJ,
+        destinationCompanyName: data.destinationCompanyName || "",
+        destinationStreet: data.destinationStreet,
+        destinationCity: data.destinationCity,
+        destinationState: data.destinationState,
+        destinationZipCode: data.destinationZipCode || "",
+        cargoType: data.cargoType,
+        weight: data.weight,
+        volume: data.volume,
+        invoiceValue: data.invoiceValue,
+        cargoDescription: data.cargoDescription || "",
+        packageQuantity: data.packageQuantity || 0,
+        pickupDate: data.pickupDate,
+        deliveryDate: data.deliveryDate,
+        notes: data.notes || "",
+        requireInsurance: data.requireInsurance || false,
+        status: data.status || "pending",
+        completedAt: data.status === "completed" ? new Date() : null,
+        origin: originValue,
+        destination: destinationValue
+      })
+      .where(eq(freightRequests.id, id))
+      .returning();
+    
+    return updatedRequest;
+  }
+
+  async getQuoteById(id: number): Promise<Quote | undefined> {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
+    return quote;
+  }
+
+  async deleteQuote(id: number): Promise<void> {
+    await db.delete(quotes).where(eq(quotes.id, id));
+  }
+
+  async updateQuote(id: number, data: InsertQuote): Promise<Quote> {
+    const [updatedQuote] = await db
+      .update(quotes)
+      .set(data)
+      .where(eq(quotes.id, id))
+      .returning();
+    
+    return updatedQuote;
   }
 }
 

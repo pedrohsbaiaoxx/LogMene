@@ -1640,5 +1640,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a freight request
+  app.delete("/api/requests/:id", async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getFreightRequestById(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Solicitação não encontrada" });
+      }
+
+      // Verificar se o usuário tem permissão para excluir
+      if (req.user?.id !== request.userId) {
+        return res.status(403).json({ message: "Você não tem permissão para excluir esta solicitação" });
+      }
+
+      // Verificar se a solicitação pode ser excluída
+      if (request.status !== "pending" && request.status !== "rejected") {
+        return res.status(400).json({ message: "Apenas solicitações pendentes ou rejeitadas podem ser excluídas" });
+      }
+
+      await storage.deleteFreightRequest(requestId);
+      res.status(200).json({ message: "Solicitação excluída com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir solicitação:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Update a freight request
+  app.put("/api/requests/:id", async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getFreightRequestById(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Solicitação não encontrada" });
+      }
+
+      // Verificar se o usuário tem permissão para editar
+      if (req.user?.id !== request.userId) {
+        return res.status(403).json({ message: "Você não tem permissão para editar esta solicitação" });
+      }
+
+      // Verificar se a solicitação pode ser editada
+      if (request.status !== "pending" && request.status !== "rejected") {
+        return res.status(400).json({ message: "Apenas solicitações pendentes ou rejeitadas podem ser editadas" });
+      }
+
+      const updateData = insertFreightRequestSchema.parse(req.body);
+      const updatedRequest = await storage.updateFreightRequest(requestId, updateData);
+      res.status(200).json(updatedRequest);
+    } catch (error) {
+      handleZodError(error, res);
+    }
+  });
+
+  // Delete a quote
+  app.delete("/api/quotes/:id", ensureCompany, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const quote = await storage.getQuoteById(quoteId);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+
+      // Verificar se a cotação pode ser excluída
+      const request = await storage.getFreightRequestById(quote.requestId);
+      if (!request || request.status !== "quoted") {
+        return res.status(400).json({ message: "Apenas cotações não respondidas podem ser excluídas" });
+      }
+
+      await storage.deleteQuote(quoteId);
+      await storage.updateFreightRequestStatus(quote.requestId, "pending");
+      res.status(200).json({ message: "Cotação excluída com sucesso" });
+    } catch (error) {
+      console.error("Erro ao excluir cotação:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Update a quote
+  app.put("/api/quotes/:id", ensureCompany, async (req, res) => {
+    try {
+      const quoteId = parseInt(req.params.id);
+      const quote = await storage.getQuoteById(quoteId);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Cotação não encontrada" });
+      }
+
+      // Verificar se a cotação pode ser editada
+      const request = await storage.getFreightRequestById(quote.requestId);
+      if (!request || request.status !== "quoted") {
+        return res.status(400).json({ message: "Apenas cotações não respondidas podem ser editadas" });
+      }
+
+      const updateData = insertQuoteSchema.parse(req.body);
+      const updatedQuote = await storage.updateQuote(quoteId, updateData);
+      res.status(200).json(updatedQuote);
+    } catch (error) {
+      handleZodError(error, res);
+    }
+  });
+
   return httpServer;
 }
