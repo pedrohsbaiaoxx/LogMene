@@ -29,6 +29,7 @@ export default function CompanyRequestDetailsPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   
   const requestId = params.id ? parseInt(params.id) : 0;
   
@@ -61,6 +62,29 @@ export default function CompanyRequestDetailsPage() {
     },
   });
 
+  // Delete quote mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!request?.quote) return;
+      const res = await apiRequest("DELETE", `/api/quotes/${request.quote.id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Cotação excluída",
+        description: "A cotação foi excluída com sucesso.",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/requests/${requestId}`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleComplete = () => {
     setCompleteConfirmOpen(true);
   };
@@ -68,6 +92,15 @@ export default function CompanyRequestDetailsPage() {
   const confirmComplete = () => {
     completeRequestMutation.mutate();
     setCompleteConfirmOpen(false);
+  };
+
+  const handleDelete = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteConfirmOpen(false);
   };
 
   if (isLoading) {
@@ -143,7 +176,7 @@ export default function CompanyRequestDetailsPage() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button
             variant="ghost"
             className="flex items-center text-primary p-0 h-auto"
@@ -152,6 +185,24 @@ export default function CompanyRequestDetailsPage() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Voltar
           </Button>
+
+          {request?.quote && request.status === "quoted" && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="text-red-600 border-red-600 hover:bg-red-50"
+                onClick={handleDelete}
+              >
+                Excluir Cotação
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/edit-quote/${request.quote?.id}`)}
+              >
+                Editar Cotação
+              </Button>
+            </div>
+          )}
         </div>
 
         <Card className="mb-6">
@@ -355,6 +406,26 @@ export default function CompanyRequestDetailsPage() {
               className="bg-green-600 hover:bg-green-700"
             >
               Confirmar Conclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cotação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A cotação será permanentemente excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

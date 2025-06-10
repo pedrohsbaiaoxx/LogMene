@@ -204,7 +204,7 @@ export default function ClientRequestsPage() {
                           
                           <div>
                             <p className="text-sm text-muted-foreground">Volume</p>
-                            <p className="font-medium">{request.volume} m³</p>
+                            <p className="font-medium">{request.volume}</p>
                           </div>
                         </div>
                         

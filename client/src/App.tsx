@@ -20,6 +20,8 @@ import CreateClientPage from "@/pages/company/create-client";
 import ClientRequestsPage from "@/pages/company/client-requests";
 import TestNotificationPage from "@/pages/test-notification";
 import { useAuth } from "@/hooks/use-auth";
+import EditRequestPage from "./pages/client/edit-request";
+import EditQuotePage from "./pages/company/edit-quote";
 
 function Router() {
   const { user } = useAuth();
@@ -87,6 +89,18 @@ function Router() {
       <ProtectedRoute 
         path="/test-notification" 
         component={TestNotificationPage} 
+      />
+      
+      {/* Client Routes */}
+      <Route 
+        path="/edit-request/:id" 
+        component={EditRequestPage} 
+      />
+      
+      {/* Company Routes */}
+      <Route 
+        path="/edit-quote/:id" 
+        component={EditQuotePage} 
       />
       
       {/* Fallback to 404 */}
