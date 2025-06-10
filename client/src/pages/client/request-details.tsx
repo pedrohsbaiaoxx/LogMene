@@ -31,6 +31,8 @@ export default function RequestDetailsPage() {
   const { toast } = useToast();
   const [statusUpdateConfirmOpen, setStatusUpdateConfirmOpen] = useState(false);
   const [statusToUpdate, setStatusToUpdate] = useState<"accepted" | "rejected">("accepted");
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   
   const requestId = params.id ? parseInt(params.id) : 0;
   
@@ -64,6 +66,28 @@ export default function RequestDetailsPage() {
     },
   });
 
+  // Delete request mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", `/api/requests/${requestId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Solicitação excluída",
+        description: "A solicitação foi excluída com sucesso.",
+      });
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleStatusUpdate = (status: "accepted" | "rejected") => {
     setStatusToUpdate(status);
     setStatusUpdateConfirmOpen(true);
@@ -72,6 +96,15 @@ export default function RequestDetailsPage() {
   const confirmStatusUpdate = () => {
     updateStatusMutation.mutate(statusToUpdate);
     setStatusUpdateConfirmOpen(false);
+  };
+
+  const handleDelete = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteConfirmOpen(false);
   };
 
   if (isLoading) {
@@ -147,7 +180,7 @@ export default function RequestDetailsPage() {
       <Header />
       
       <main className="flex-1 container mx-auto px-4 py-6 pb-20 md:pb-6">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button
             variant="ghost"
             className="flex items-center text-primary p-0 h-auto"
@@ -156,6 +189,25 @@ export default function RequestDetailsPage() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Voltar
           </Button>
+
+          {request && (request.status === "pending" || request.status === "rejected") && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="text-red-600 border-red-600 hover:bg-red-50"
+                onClick={handleDelete}
+              >
+                Excluir
+              </Button>
+              <Button
+                variant="outline"
+                className="text-primary border-primary hover:bg-primary/10"
+                onClick={() => navigate(`/edit-request/${requestId}`)}
+              >
+                Editar
+              </Button>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -212,7 +264,7 @@ export default function RequestDetailsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Volume</p>
-                  <p className="font-medium text-neutral-700">{request.volume} m³</p>
+                  <p className="font-medium text-neutral-700">{request.volume}</p>
                 </div>
               </div>
             </div>
@@ -395,6 +447,26 @@ export default function RequestDetailsPage() {
               className={statusToUpdate === "accepted" ? "bg-[#4CAF50] hover:bg-[#4CAF50]/90" : ""}
             >
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-neutral-800">Excluir solicitação?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-700">
+              Esta ação não pode ser desfeita. A solicitação será permanentemente excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
