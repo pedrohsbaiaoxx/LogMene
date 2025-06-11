@@ -1,0 +1,10 @@
+{
+  "schema": "./shared/schema.ts",
+  "out": "./drizzle",
+  "dialect": "postgresql",
+  "dbCredentials": {
+    "connectionString": "postgresql://neondb_owner:npg_gceZKXqEOx46@ep-wild-rice-a5ecrykq-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+  },
+  "verbose": true,
+  "strict": true
+} 
