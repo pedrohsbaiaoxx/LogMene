@@ -12,14 +12,13 @@ export interface FreightRequest {
 }
 
 export interface Quote {
-  id: string;
-  requestId: string;
-  companyId: string;
+  id: number;
+  requestId: number;
   value: number;
-  description: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  updatedAt: string;
+  estimatedDays: number;
+  notes?: string;
+  distanceKm?: number;
+  createdAt: Date;
 }
 
 export interface FreightRequestWithQuote extends FreightRequest {
