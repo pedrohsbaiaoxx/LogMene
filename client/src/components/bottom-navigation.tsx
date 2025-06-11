@@ -1,6 +1,7 @@
+import React from "react";
 import { Link, useLocation } from "wouter";
 import { BarChart2, Home, Package, PlusCircle, Truck, Bell, FileText } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "../hooks/use-auth";
 
 export function BottomNavigation() {
   const { user } = useAuth();

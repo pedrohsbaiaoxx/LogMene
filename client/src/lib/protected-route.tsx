@@ -1,10 +1,11 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "../hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import React from "react";
 
 type ProtectedRouteProps = {
   path: string;
-  component: () => React.JSX.Element;
+  component: React.ComponentType<any>;
   allowedRoles?: string[];
 };
 

@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./use-toast";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -20,23 +20,28 @@ type AuthContextType = {
 type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<SelectUser, Error, LoginData>({
     mutationFn: async (credentials: LoginData) => {
+      console.log("Attempting login with:", credentials);
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const data = await res.json();
+      console.log("Login response:", data);
+      return data;
     },
     onSuccess: (user: SelectUser) => {
+      console.log("Login successful:", user);
       queryClient.setQueryData(["/api/user"], user);
       const welcomeMessage = user.role === "company" 
         ? "Bem-vindo(a) de volta, LogMene!" 
@@ -47,20 +52,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Login error:", error);
       toast({
         title: "Falha no login",
-        description: "Nome de usuário ou senha incorretos",
+        description: error.message || "Nome de usuário ou senha incorretos",
         variant: "destructive",
       });
     },
   });
 
-  const registerMutation = useMutation({
+  const registerMutation = useMutation<SelectUser, Error, InsertUser>({
     mutationFn: async (credentials: InsertUser) => {
+      console.log("Attempting registration with:", credentials);
       const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      const data = await res.json();
+      console.log("Registration response:", data);
+      return data;
     },
     onSuccess: (user: SelectUser) => {
+      console.log("Registration successful:", user);
       queryClient.setQueryData(["/api/user"], user);
       const welcomeMessage = user.role === "company" 
         ? "Bem-vindo(a), LogMene!" 
@@ -71,19 +81,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Registration error:", error);
       toast({
         title: "Falha no cadastro",
-        description: "Não foi possível completar o cadastro. Por favor, tente novamente.",
+        description: error.message || "Não foi possível completar o cadastro. Por favor, tente novamente.",
         variant: "destructive",
       });
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
+      console.log("Attempting logout");
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      console.log("Logout successful");
       queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Sessão encerrada",
@@ -91,9 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Logout error:", error);
       toast({
         title: "Falha ao sair",
-        description: "Não foi possível encerrar a sessão. Tente novamente.",
+        description: error.message || "Não foi possível encerrar a sessão. Tente novamente.",
         variant: "destructive",
       });
     },
