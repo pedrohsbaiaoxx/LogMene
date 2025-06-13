@@ -2,8 +2,7 @@ module.exports = {
   apps: [{
     name: 'logmene-backend',
     script: 'server/index.ts',
-    interpreter: '/usr/bin/node',
-    interpreter_args: '--require tsx/register',
+    interpreter: '/usr/bin/tsx',
     env: {
       NODE_ENV: 'production',
       TS_NODE_PROJECT: './tsconfig.json'
