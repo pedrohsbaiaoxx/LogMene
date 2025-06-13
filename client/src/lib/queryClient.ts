@@ -1,6 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE_URL = process.env.NODE_ENV === "production" ? "https://api.logmene.tech" : "http://localhost:3000";
+const API_BASE_URL = process.env.NODE_ENV === "production" ? "https://logmene.tech" : "http://localhost:3000";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
