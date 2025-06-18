@@ -5,7 +5,7 @@ import { ArrowLeft, CalendarIcon } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { format, parseISO, startOfDay } from "date-fns";
+import { format, parseISO, startOfDay, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -406,7 +406,8 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  const adjustedDate = addDays(date, 1);
+                                  field.onChange(format(adjustedDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
@@ -453,7 +454,8 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  const adjustedDate = addDays(date, 1);
+                                  field.onChange(format(adjustedDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
