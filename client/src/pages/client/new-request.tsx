@@ -406,8 +406,7 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  const adjustedDate = addDays(date, 1);
-                                  field.onChange(format(adjustedDate, "yyyy-MM-dd"));
+                                  field.onChange(format(date, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
