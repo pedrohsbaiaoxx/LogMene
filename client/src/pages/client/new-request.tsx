@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format, parseISO, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 import { Header } from "@/components/header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { AddressInput } from "@/components/address-input";
@@ -406,7 +407,9 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  // Converte a data para o fuso horário local
+                                  const localDate = utcToZonedTime(date, 'America/Sao_Paulo');
+                                  field.onChange(format(localDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
@@ -453,7 +456,9 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  // Converte a data para o fuso horário local
+                                  const localDate = utcToZonedTime(date, 'America/Sao_Paulo');
+                                  field.onChange(format(localDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
