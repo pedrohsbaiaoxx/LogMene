@@ -406,10 +406,9 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Ajusta a data para o início do dia no fuso horário local
-                                  const localDate = new Date(date);
-                                  localDate.setHours(12, 0, 0, 0); // Define para meio-dia para evitar problemas de timezone
-                                  field.onChange(format(localDate, "yyyy-MM-dd"));
+                                  // Adiciona um dia ao formatar para o campo
+                                  const nextDay = addDays(date, 1);
+                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
@@ -456,10 +455,9 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Ajusta a data para o início do dia no fuso horário local
-                                  const localDate = new Date(date);
-                                  localDate.setHours(12, 0, 0, 0); // Define para meio-dia para evitar problemas de timezone
-                                  field.onChange(format(localDate, "yyyy-MM-dd"));
+                                  // Adiciona um dia ao formatar para o campo
+                                  const nextDay = addDays(date, 1);
+                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
