@@ -406,10 +406,7 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Adiciona 1 dia à data selecionada
-                                  const nextDay = new Date(date);
-                                  nextDay.setDate(nextDay.getDate() + 1);
-                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
+                                  field.onChange(format(date, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
@@ -456,10 +453,7 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  // Adiciona 1 dia à data selecionada
-                                  const nextDay = new Date(date);
-                                  nextDay.setDate(nextDay.getDate() + 1);
-                                  field.onChange(format(nextDay, "yyyy-MM-dd"));
+                                  field.onChange(format(date, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
