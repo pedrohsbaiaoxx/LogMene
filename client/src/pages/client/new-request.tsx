@@ -403,7 +403,7 @@ export default function NewRequestPage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ? parseISO(field.value) : undefined}
+                              selected={field.value ? addDays(parseISO(field.value), -1) : undefined}
                               onSelect={(date) => {
                                 if (date) {
                                   // Adiciona um dia ao formatar para o campo
@@ -452,7 +452,7 @@ export default function NewRequestPage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ? parseISO(field.value) : undefined}
+                              selected={field.value ? addDays(parseISO(field.value), -1) : undefined}
                               onSelect={(date) => {
                                 if (date) {
                                   // Adiciona um dia ao formatar para o campo
