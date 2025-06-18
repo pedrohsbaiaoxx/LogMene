@@ -406,7 +406,10 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  // Ajusta a data para o fuso horário local
+                                  const localDate = new Date(date);
+                                  localDate.setMinutes(localDate.getMinutes() + localDate.getTimezoneOffset());
+                                  field.onChange(format(localDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
@@ -453,7 +456,10 @@ export default function NewRequestPage() {
                               selected={field.value ? parseISO(field.value) : undefined}
                               onSelect={(date) => {
                                 if (date) {
-                                  field.onChange(format(date, "yyyy-MM-dd"));
+                                  // Ajusta a data para o fuso horário local
+                                  const localDate = new Date(date);
+                                  localDate.setMinutes(localDate.getMinutes() + localDate.getTimezoneOffset());
+                                  field.onChange(format(localDate, "yyyy-MM-dd"));
                                 } else {
                                   field.onChange("");
                                 }
