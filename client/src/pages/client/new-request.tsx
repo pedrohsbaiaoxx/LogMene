@@ -170,8 +170,8 @@ export default function NewRequestPage() {
       cargoType: values.cargoType === "Perigosa" ? "dangerous" : values.cargoType,
       
       // Formatando as datas
-      pickupDate: format(new Date(values.pickupDate), "yyyy-MM-dd"),
-      deliveryDate: format(new Date(values.deliveryDate), "yyyy-MM-dd")
+      pickupDate: values.pickupDate,
+      deliveryDate: values.deliveryDate
     };
     
     console.log("Valores formatados:", formattedValues);
