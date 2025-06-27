@@ -17,6 +17,12 @@ type DeliveryProofViewerProps = {
 };
 
 export function DeliveryProofViewer({ requestId, requestStatus }: DeliveryProofViewerProps) {
+  // Estado para zoom - movido para o topo, fora de qualquer condição
+  const [zoom, setZoom] = useState(1);
+  const handleZoomIn = () => setZoom(z => Math.min(z + 0.2, 3));
+  const handleZoomOut = () => setZoom(z => Math.max(z - 0.2, 0.4));
+  const handleResetZoom = () => setZoom(1);
+
   // Buscar comprovante existente
   const { 
     data: existingProof,
@@ -47,12 +53,6 @@ export function DeliveryProofViewer({ requestId, requestStatus }: DeliveryProofV
 
   // Se o comprovante existe, mostrar
   if (existingProof) {
-    // Estado para zoom
-    const [zoom, setZoom] = useState(1);
-    const handleZoomIn = () => setZoom(z => Math.min(z + 0.2, 3));
-    const handleZoomOut = () => setZoom(z => Math.max(z - 0.2, 0.4));
-    const handleResetZoom = () => setZoom(1);
-
     return (
       <Card className="w-full">
         <CardHeader>
