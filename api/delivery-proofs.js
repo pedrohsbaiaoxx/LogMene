@@ -93,6 +93,11 @@ export default async function handler(req, res) {
             uploadedAt: new Date()
           })
           .returning();
+
+        // Atualizar status e data de conclusão da solicitação
+        await db.update(freightRequests)
+          .set({ status: 'completed', completedAt: new Date() })
+          .where(eq(freightRequests.id, requestId));
           
         // Enviar notificação por email ao cliente
         try {
