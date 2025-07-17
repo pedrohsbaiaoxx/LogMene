@@ -146,7 +146,7 @@ export default function CompanyHomePage() {
       },
     },
     {
-      accessorKey: "completedDate",
+      accessorKey: "completedAt", // Corrigido de 'completedDate' para 'completedAt'
       header: "Concluído em",
       cell: ({ row }) => {
         return row.original.completedAt ? formatISODateToDisplay(row.original.completedAt.toString()) : '-';
